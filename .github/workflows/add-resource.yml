@@ -1,0 +1,166 @@
+name: Add Approved Resource
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  add-resource:
+    if: github.event.label.name == 'approved'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      
+      - name: Extract resource details
+        id: extract
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body;
+            
+            // Parse issue body for resource details
+            const titleMatch = body.match(/\*\*Resource Title:\*\*\s*\n([^\n]+)/);
+            const urlMatch = body.match(/\*\*URL:\*\*\s*\n([^\n]+)/);
+            const moduleMatch = body.match(/\*\*Recommended for Module\(s\):\*\*\s*\n([^\n]+)/);
+            
+            const title = titleMatch ? titleMatch[1].trim() : '';
+            const url = urlMatch ? urlMatch[1].trim() : '';
+            const modules = moduleMatch ? moduleMatch[1].trim() : '';
+            
+            // Extract module numbers from string like "Module 1-3" or "1, 2, 3"
+            const moduleNumbers = [];
+            const matches = modules.match(/\d+/g);
+            if (matches) {
+              matches.forEach(num => {
+                const n = parseInt(num);
+                if (n >= 1 && n <= 10) moduleNumbers.push(n);
+              });
+            }
+            
+            // Remove duplicates and sort
+            const uniqueModules = [...new Set(moduleNumbers)].sort((a, b) => a - b);
+            
+            console.log(`Title: ${title}`);
+            console.log(`URL: ${url}`);
+            console.log(`Modules: ${uniqueModules.join(', ')}`);
+            
+            core.setOutput('title', title);
+            core.setOutput('url', url);
+            core.setOutput('modules', uniqueModules.join(','));
+            core.setOutput('issue_number', issue.number);
+      
+      - name: Create Pull Request
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = '${{ steps.extract.outputs.title }}';
+            const url = '${{ steps.extract.outputs.url }}';
+            const modules = '${{ steps.extract.outputs.modules }}'.split(',').map(m => parseInt(m));
+            const issueNumber = '${{ steps.extract.outputs.issue_number }}';
+            
+            if (!title || !url || modules.length === 0) {
+              console.log('Skipping: Missing required fields');
+              return;
+            }
+            
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read current config
+            const configPath = 'assets/js/app.js';
+            let content = fs.readFileSync(configPath, 'utf8');
+            
+            // Create resource entry for each module
+            let resourceEntry = `{ title: "${title.replace(/"/g, '\\"')}", url: "${url}" }`;
+            
+            // Update furtherLearning array for each module
+            modules.forEach(moduleNum => {
+              const regex = new RegExp(`(\\{ module: ${moduleNum}, items: \\[[^\\]]+)`);
+              const match = content.match(regex);
+              
+              if (match) {
+                // Check if resource already exists
+                if (!content.includes(`"${title}"`)) {
+                  // Add resource to this module's items array
+                  content = content.replace(
+                    /({ module: ${moduleNum}, items: \[[^\]]+)(\s*\]\})/,
+                    `$1,\n        ${resourceEntry}$2`
+                  );
+                }
+              }
+            });
+            
+            // Create a new branch
+            const branchName = `add-resource/issue-${issueNumber}`;
+            
+            // Commit changes using GitHub API
+            const ref = await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/main'
+            });
+            
+            const currentCommit = await github.rest.git.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: ref.data.object.sha
+            });
+            
+            const blob = await github.rest.git.createBlob({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              content: content,
+              encoding: 'utf-8'
+            });
+            
+            const tree = await github.rest.git.createTree({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base_tree: currentCommit.data.tree.sha,
+              tree: [
+                {
+                  path: 'assets/js/app.js',
+                  mode: '100644',
+                  type: 'blob',
+                  sha: blob.data.sha
+                }
+              ]
+            });
+            
+            const commit = await github.rest.git.createCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              message: `Add resource: "${title}" (closes #${issueNumber})`,
+              tree: tree.data.sha,
+              parents: [currentCommit.data.sha]
+            });
+            
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/heads/${branchName}`,
+              sha: commit.data.sha
+            });
+            
+            // Create pull request
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Add resource: ${title}`,
+              body: `Adds suggested resource from issue #${issueNumber}\n\n**Resource:** ${title}\n**URL:** ${url}\n**Modules:** ${modules.join(', ')}`,
+              head: branchName,
+              base: 'main'
+            });
+            
+            console.log(`Created PR #${pr.data.number}`);
+            
+            // Add comment to issue
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `✅ Thanks for the suggestion! I've created a PR to add this resource. You can review it [here](${pr.data.html_url}).`
+            });
