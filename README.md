@@ -1,116 +1,134 @@
-# Daintta PNT Engineering Learning Programme
+# Daintta PNT Engineering: learning app (standalone)
 
-**From PNT foundations to applied engineering capability**
+A self-paced web learning app for the Daintta PNT Engineering *Foundation & Practitioner Learning Programme*. It contains 10 modules built from the programme's Word documents. Each module ends with a 15-question assessment. Learners who score 80% or more get a printable certificate, and passing all 10 modules earns a programme certificate.
 
-A progressive learning pathway covering Positioning, Navigation and
-Timing (PNT) fundamentals, resilient PNT engineering, systems
-architecture, verification, assurance and applied engineering.
+This is the **standalone** version. It needs no server or database: each learner's progress is saved in their own browser. If you need a central record of every employee's progress, use the **admin version** (`pnt-learning-admin`) instead.
 
-------------------------------------------------------------------------
+## What's included
 
-## Learning Pathway
+| | |
+|---|---|
+| Lessons | 202 lessons, one per section of the source documents, with all 62 diagrams (click to enlarge) |
+| Practice questions | The 98 Knowledge Check questions from the documents, with instant feedback and your rationale text |
+| Assessments | 150 questions (15 per module): single choice, multi-select, true/false, matching and ordering. Questions and options are shuffled on every attempt |
+| Rules | Pass mark 80%; the assessment unlocks when every lesson in the module has been read; unlimited retakes; correct answers are revealed only after passing |
+| Certificates | One per module plus a programme certificate, A4 landscape, printable or saved as PDF. Each shows the learner's name, email, score, date, a certificate ID and the content version |
+| Glossary | 147 key terms collected from the Key Terms sections, searchable |
+| Accessibility | Keyboard operable, screen-reader labels, visible focus, light and dark modes, works on mobile |
 
-The programme is cumulative. Learners may stop at the level appropriate
-to their role, or continue through the full pathway. Assessment depth
-increases from knowledge and understanding, to technical reasoning, to
-demonstrated application through the capstone.
+## Try it locally
 
-### 1. PNT Foundation
+The app is plain HTML, CSS and JavaScript, with no build step. Serve the folder with any static web server:
 
-**Modules 1-4**\
-**Learning focus:** Understand the concepts
+```bash
+python3 -m http.server 8000
+# then open http://localhost:8000
+```
 
-  Module   Topic
-  -------- ------------------------------------
-  1        PNT Fundamentals
-  2        How GNSS Works
-  3        GNSS Signals, Errors & Performance
-  4        High-Accuracy & Augmented GNSS
+## Deploy to GitHub Pages
 
-Develop PNT literacy and the confidence to participate meaningfully in
-PNT-related discussions.
+1. Create a repository and push this folder to the `main` branch.
+2. In the repository, go to **Settings → Pages** and set **Source** to **GitHub Actions**.
+3. The included workflow (`.github/workflows/pages.yml`) publishes the site on every push to `main`. The site address appears on the Actions run and on the Pages settings screen.
 
-**Award:** Daintta PNT Foundation Certificate
+The workflow publishes only `index.html`, `assets/` and `content/`. The editable question files in `assessments/` and the `tools/` scripts stay in the repository and are not put on the website.
 
-------------------------------------------------------------------------
+> **Visibility:** on GitHub Free, Pages sites are public, and Pages from a private repository needs GitHub Pro, Team or Enterprise. Enterprise can also restrict a Pages site to members of your organisation. If the training material should not be publicly reachable, check your plan before deploying.
 
-### 2. PNT Engineering Practitioner
+## Configuration
 
-**Modules 1-7**\
-**Learning focus:** Understand and reason
+Edit `assets/js/config.js`:
 
-Builds on the Foundation stage and adds:
+| Setting | Default | Purpose |
+|---|---|---|
+| `passMark` | `80` | Percentage needed to pass each assessment |
+| `requireAllLessonsRead` | `true` | Unlock the assessment only after every lesson is marked as read |
+| `revealAnswersOnFail` | `false` | Show correct answers and explanations after a failed attempt |
+| `certificate.signatoryName` / `signatoryTitle` | empty | Adds a signature block to certificates when set |
+| `organisation`, `programmeTitle`, `programmeSubtitle` | Daintta values | Text used across the app and certificates |
 
-  Module   Topic
-  -------- -------------------------------
-  5        Alternative PNT Technologies
-  6        PNT Threats & Vulnerabilities
-  7        Resilient PNT Engineering
+## Updating the course content
 
-Develop the technical understanding and judgement to reason about PNT
-technologies, dependencies, threats and resilience.
+When the Word documents change (for example from version 0.1 to 1.0), regenerate the content instead of editing it by hand:
 
-**Award:** Daintta PNT Engineering Practitioner Certificate
+```bash
+pip install beautifulsoup4 pillow      # also needs pandoc installed
+python3 tools/build_content.py --src path/to/folder-with-docx --out .
+python3 tools/build_assessments.py --mode local
+```
 
-------------------------------------------------------------------------
+The documents must keep their `..._Module_NN_....docx` file names. The script:
 
-### 3. PNT Applied Engineering
+- splits each module into lessons at every Heading 1
+- turns single-cell tables into call-out boxes
+- resizes the images and converts them to WebP
+- turns the Knowledge Check section and its answer key into practice questions
+- rebuilds the glossary from the Key Terms tables
+- reads the version number from each document's title page, which is then printed on new certificates
 
-**Modules 1-10 + assessed capstone**\
-**Learning focus:** Apply and evidence
+Diagrams get alt text taken from their lesson title, because the source documents do not include image descriptions. For better screen-reader support, add Alt Text to the images in Word and extend the script to use it.
 
-Builds on the Practitioner stage and adds:
+## Editing assessments
 
-  Module   Topic
-  -------- ------------------------------------------
-  8        PNT Architecture & Systems Engineering
-  9        PNT Verification, Validation & Assurance
-  10       Applied PNT Engineering
+Each module's questions are in `assessments/mNN.md`, written so that a subject-matter expert can review and edit them in any text editor. After editing, run `python3 tools/build_assessments.py --mode local`. It checks the format and reports any mistakes.
 
-Apply PNT engineering principles to requirements, architecture,
-operational behaviour, verification and assurance, then demonstrate that
-understanding through the applied capstone.
+```markdown
+## single
+Question text.
+- A wrong option
+* The correct option (marked with *)
+- Another wrong option
+> Explanation shown after the learner passes.
 
-**Award:** Daintta PNT Applied Engineering Certificate
+## multi
+Question text. Mark every correct option with *.
+* Correct
+* Also correct
+- Wrong
+> Explanation.
 
-------------------------------------------------------------------------
+## truefalse
+A statement.
+= false
+> Explanation.
 
-## Capability Progression
+## match
+Instruction text.
+- Left item = Its matching right item
+- Another left item = Its match
+> Explanation. (Right-hand items are shuffled; each must be unique.)
 
-**KNOW → UNDERSTAND & REASON → APPLY & EVIDENCE**
+## order
+Instruction text. List the items in the CORRECT order; they are shuffled on screen.
+1. First
+2. Second
+3. Third
+> Explanation.
+```
 
-  ------------------------------------------------------------------------
-  Stage                                      Modules Primary capability
-  --------------------- ---------------------------- ---------------------
-  **PNT Foundation**                             1-4 Understand core PNT
-                                                     concepts and
-                                                     participate
-                                                     meaningfully in
-                                                     PNT-related
-                                                     discussions.
+The pass mark applies to the number of questions in each file, so modules can have different question counts.
 
-  **PNT Engineering                              1-7 Understand and reason
-  Practitioner**                                     about PNT
-                                                     technologies,
-                                                     dependencies, failure
-                                                     modes and resilient
-                                                     PNT engineering.
+**Please have a PNT subject-matter expert review the assessment questions before rollout.** They were written from the module content, and a reviewer should confirm the wording and answers.
 
-  **PNT Applied                      1-10 + capstone Apply PNT engineering
-  Engineering**                                      principles to
-                                                     realistic
-                                                     requirements,
-                                                     architecture,
-                                                     verification and
-                                                     assurance problems.
-  ------------------------------------------------------------------------
+## Limitations of the standalone version
 
-> The pathway is capability-based. Foundation develops PNT literacy;
-> Practitioner develops technical understanding and engineering
-> judgement; Applied Engineering requires the learner to demonstrate
-> that understanding through a realistic engineering problem.
+- **Progress is per browser.** Learners who clear their browser data, or switch device or browser, start again. Certificates should be saved as PDFs to keep a permanent copy.
+- **It is not tamper-proof.** Scoring happens in the learner's browser, so the answer key is present in the page's JavaScript and a determined person could find it. Certificate IDs cannot be verified centrally.
+- **There is no central reporting.** Learners send their certificate PDFs to show completion.
 
-------------------------------------------------------------------------
+The admin version addresses all three: server-side scoring with hidden answer keys, central records, an admin dashboard and a public certificate-verification page.
 
-*Daintta PNT Engineering Learning Programme \| Programme Overview \|
-Draft*
+## Folder structure
+
+```
+index.html                  the app
+assets/css/app.css          styles
+assets/js/config.js         settings
+assets/js/app.js            app logic (shared with the admin version)
+assets/js/store-local.js    browser storage and scoring
+assets/img/                 logo, favicon, module diagrams (WebP)
+content/                    generated lesson, practice, glossary and assessment data
+assessments/mNN.md          editable assessment questions (not published)
+tools/                      content and assessment build scripts (not published)
+.github/workflows/pages.yml GitHub Pages deployment
+```
