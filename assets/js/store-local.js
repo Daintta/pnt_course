@@ -23,7 +23,12 @@
 
   PNT.store = {
     kind: "local",
-    async init() { return { ok: true }; },
+    async init() {
+      if (!window.Auth) return { needsAuth: true, mode: "signin" };
+      const session = await Auth.getSession();
+      if (!session) return { needsAuth: true, mode: "signin" };
+      return { ok: true };
+    },
     async getProfile() { return load().profile; },
     async saveProfile(p) {
       const d = load();

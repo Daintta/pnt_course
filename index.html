@@ -14,28 +14,6 @@
 <body>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/auth.js"></script>
-  <script>
-    (async function() {
-      try {
-        await Auth.init();
-
-        // If URL has token from magic link, let it process
-        if (window.location.hash.includes('access_token')) {
-          console.log('Magic link token detected, waiting for session...');
-          await new Promise(resolve => setTimeout(resolve, 200));
-          window.location.hash = '';
-        }
-
-        const session = await Auth.getSession();
-        if (session) {
-          console.log('Session found, syncing profile...');
-          await Auth.syncLearnerProfile();
-        }
-      } catch (error) {
-        console.error('Initialization failed:', error);
-      }
-    })();
-  </script>
 
   <!-- App content -->
   <a class="skip" href="#view">Skip to content</a>

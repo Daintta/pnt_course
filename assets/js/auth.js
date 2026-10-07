@@ -22,13 +22,18 @@ const Auth = (() => {
     supabaseClient = createClient(window.config.SUPABASE_URL, window.config.SUPABASE_ANON_KEY);
   }
 
-  async function signInWithMagicLink(email) {
-    const { error } = await supabaseClient.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: 'http://localhost:8000' },
-    });
+  async function signIn(email, password) {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) throw new Error(`Sign-in failed: ${error.message}`);
-    return { email };
+    return data.user;
+  }
+
+  async function signUp(email, password, fullName) {
+    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+    if (error) throw new Error(`Sign-up failed: ${error.message}`);
+    if (!data.user) throw new Error('Sign-up failed: no user returned');
+    await syncLearnerProfile(data.user.id, email, fullName);
+    return data.user;
   }
 
   async function getSession() {
@@ -41,21 +46,23 @@ const Auth = (() => {
     await supabaseClient.auth.signOut();
   }
 
-  async function syncLearnerProfile() {
+  async function syncLearnerProfile(userId = null, email = null, fullName = null) {
     const session = await getSession();
-    if (!session) throw new Error('No active session');
-    const { data: existing } = await supabaseClient.from('learners').select('id, name').eq('id', session.user.id).single();
+    const uid = userId || session?.user?.id;
+    const userEmail = email || session?.user?.email;
+    if (!uid) throw new Error('No active session');
+    const { data: existing } = await supabaseClient.from('learners').select('id, full_name').eq('id', uid).single();
     if (!existing) {
       const { error } = await supabaseClient.from('learners').insert([{
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.email.split('@')[0],
+        id: uid,
+        email: userEmail,
+        full_name: fullName || userEmail.split('@')[0],
       }]);
       if (error) throw error;
     } else {
-      await supabaseClient.from('learners').update({ last_login: new Date().toISOString() }).eq('id', session.user.id);
+      await supabaseClient.from('learners').update({ last_login: new Date().toISOString() }).eq('id', uid);
     }
   }
 
-  return { init, signInWithMagicLink, getSession, signOut, syncLearnerProfile };
+  return { init, signIn, signUp, getSession, signOut, syncLearnerProfile };
 })();
