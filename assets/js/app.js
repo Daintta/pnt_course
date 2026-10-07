@@ -184,17 +184,34 @@
       const pct = Math.round((read / m.lessons.length) * 100);
       const c = cert(m.id);
       const tries = attempts(m.id);
+      const locked = !assessmentUnlocked(m.id) && allRead(m.id);
+
       let badge = `<span class="status">Not started</span>`;
       if (c) badge = `<span class="status passed">Passed · ${c.percent}%</span>`;
       else if (tries.length) badge = `<span class="status failed">Not yet passed</span>`;
       else if (allRead(m.id)) badge = `<span class="status progress">Assessment ready</span>`;
       else if (st === "progress") badge = `<span class="status progress">In progress</span>`;
+
+      let actionBtn = '';
+      if (c) {
+        actionBtn = `<span class="action-btn disabled">Complete</span>`;
+      } else if (locked) {
+        actionBtn = `<span class="action-btn disabled">Locked</span>`;
+      } else if (st === "passed") {
+        actionBtn = `<span class="action-btn disabled">Complete</span>`;
+      } else {
+        const nextLesson = st === "new" ? m.lessons[0] : m.lessons.find(l => !readSet(m.id).has(l.id));
+        const href = nextLesson ? `#/module/${m.id}/lesson/${nextLesson.id}` : `#/module/${m.id}`;
+        const label = st === "progress" ? "Continue" : "Get Started";
+        actionBtn = `<a href="${href}" class="action-btn">${label}</a>`;
+      }
+
       return `<li class="module-row ${st}">
         <div class="num" aria-hidden="true">${pad(m.number)}</div>
         <div><h3><a href="#/module/${m.id}">${esc(m.title)}</a></h3><p>${m.lessons.length} lessons · 15-question assessment</p></div>
         <div class="m-meter"><div class="meter ${read === m.lessons.length ? "done" : ""}" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Lessons read for module ${m.number}"><i style="width:${pct}%"></i></div>
           <div class="meter-label">${read} of ${m.lessons.length} lessons read</div></div>
-        <div class="m-status">${badge}</div></li>`;
+        <div class="m-status">${badge}${actionBtn}</div></li>`;
     }).join("");
     render(`
       <section class="hero">
