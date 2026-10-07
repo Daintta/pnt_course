@@ -49,6 +49,7 @@ const Auth = (() => {
   async function getSession() {
     const { data: { session }, error } = await window.AuthModule.supabaseClient.auth.getSession();
     if (error) throw error;
+    console.log('getSession() returning:', session ? `session for ${session.user.email}` : 'null');
     return session;
   }
 
