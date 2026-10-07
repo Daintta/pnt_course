@@ -1076,8 +1076,8 @@
 
   async function boot() {
     try {
-      const session = await PNT.store.init();
-      if (session && session.needsAuth) { $("#nav").hidden = true; return authView(session.mode || "signin", session.message || ""); }
+      const initResult = await PNT.store.init();
+      if (initResult && initResult.needsAuth) { $("#nav").hidden = true; return authView(initResult.mode || "signin", initResult.message || ""); }
       document.body.classList.remove("signed-out");
       $("#nav").hidden = false;
       profile = await PNT.store.getProfile();
