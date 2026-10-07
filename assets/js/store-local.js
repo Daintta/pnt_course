@@ -1,5 +1,5 @@
-/* Standalone storage: progress, attempts and certificates live in this browser's localStorage.
- * Assessments are scored in the browser. See README for the store interface. */
+/* Hybrid storage: progress cached in localStorage for performance, synced to Supabase DB.
+ * Assessments are scored in browser. See README for store interface. */
 (function () {
   "use strict";
   const KEY = "daintta-pnt-learning-v1";
@@ -42,6 +42,27 @@
       const d = load();
       const set = new Set(d.read[moduleId] || []); set.add(lessonId);
       d.read[moduleId] = Array.from(set); save(d);
+
+      // Also save to Supabase
+      if (window.Auth && window.AuthModule?.supabaseClient) {
+        try {
+          const session = await Auth.getSession();
+          if (session) {
+            const moduleNum = parseInt(moduleId.substring(1), 10);
+            const { error } = await window.AuthModule.supabaseClient
+              .from('progress')
+              .upsert({
+                learner_id: session.user.id,
+                module_num: moduleNum,
+                lessons_read: d.read[moduleId],
+                updated_at: new Date().toISOString()
+              });
+            if (error) console.error('Failed to save progress to DB:', error);
+          }
+        } catch (e) {
+          console.error('Error syncing progress to DB:', e);
+        }
+      }
     },
     async recordPractice(moduleId, score, total) {
       const d = load();
@@ -70,6 +91,45 @@
         programmeCertificate = d.certificates.programme = { id: certId("programme"), moduleId: "programme", percent: null, issuedAt: now, fullName: d.profile.fullName, email: d.profile.email, version: version() };
       }
       save(d);
+
+      // Sync to Supabase
+      if (window.Auth && window.AuthModule?.supabaseClient) {
+        try {
+          const session = await Auth.getSession();
+          if (session) {
+            const moduleNum = parseInt(moduleId.substring(1), 10);
+            // Save attempt
+            await window.AuthModule.supabaseClient.from('assessment_attempts').insert({
+              learner_id: session.user.id,
+              module_num: moduleNum,
+              answers: answers,
+              score: score
+            });
+            // Update progress with assessment result
+            await window.AuthModule.supabaseClient.from('progress').upsert({
+              learner_id: session.user.id,
+              module_num: moduleNum,
+              assessment_attempted: true,
+              assessment_score: score,
+              passed: passed,
+              completed_at: passed ? now : null,
+              updated_at: now
+            });
+            // Save certificate if awarded
+            if (certificate) {
+              await window.AuthModule.supabaseClient.from('certificates').insert({
+                learner_id: session.user.id,
+                type: 'module',
+                module_num: moduleNum,
+                score: percent
+              });
+            }
+          }
+        } catch (e) {
+          console.error('Error syncing assessment to DB:', e);
+        }
+      }
+
       return { score, total, percent, passed, results, certificate, programmeCertificate };
     },
     async resetProgress() { const d = load(); const p = d.profile; const n = blank(); n.profile = p; save(n); },
