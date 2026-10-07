@@ -968,7 +968,7 @@
       } catch (err) { $("#pmsg").innerHTML = `<div class="notice error">${esc(err.message)}</div>`; }
     });
     const so = $("#signout");
-    if (so) so.addEventListener("click", async () => { await PNT.store.auth.signOut(); location.reload(); });
+    if (so) so.addEventListener("click", async () => { await PNT.store.auth.signOut(); });
   }
 
   /* ---------------- sign in (server builds only) ---------------- */
