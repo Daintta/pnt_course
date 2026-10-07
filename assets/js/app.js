@@ -953,9 +953,8 @@
         <div class="btn-row" style="margin:0"><button class="btn">${first ? "Start learning" : "Save details"}</button></div>
         <div id="pmsg" aria-live="polite"></div>
       </form>
-      ${!first && PNT.store.resetProgress ? `<h2>Progress</h2>
-        <p class="muted" style="max-width:62ch">Your progress and certificates are saved securely in Daintta's systems. You can access them from any device by signing in with your email. Download your certificates as PDFs to keep a permanent copy.</p>
-        <div class="btn-row"><button class="btn secondary" id="reset">Reset all progress</button></div>` : ""}
+      ${!first ? `<h2>Progress</h2>
+        <p class="muted" style="max-width:62ch">Your progress and certificates are saved securely in Daintta's systems. You can access them from any device by signing in with your email. Download your certificates as PDFs to keep a permanent copy.</p>` : ""}
       ${!first && PNT.store.auth ? `<div class="btn-row"><button class="btn secondary" id="signout">Sign out</button></div>` : ""}`, "Your details", "profile");
     $("#pf").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -967,11 +966,6 @@
         profile = await PNT.store.getProfile(); await refreshState(); updateWho();
         if (first) location.hash = "#/"; else $("#pmsg").innerHTML = `<div class="notice ok">Details saved.</div>`;
       } catch (err) { $("#pmsg").innerHTML = `<div class="notice error">${esc(err.message)}</div>`; }
-    });
-    const rs = $("#reset");
-    if (rs) rs.addEventListener("click", async () => {
-      if (!confirm("Reset all progress, attempts and certificates on this device? This cannot be undone.")) return;
-      await PNT.store.resetProgress(); await refreshState(); location.hash = "#/";
     });
     const so = $("#signout");
     if (so) so.addEventListener("click", async () => { await PNT.store.auth.signOut(); location.reload(); });
