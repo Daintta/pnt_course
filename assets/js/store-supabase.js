@@ -29,10 +29,14 @@
         .eq('id', session.user.id)
         .single();
 
-      if (error) throw new Error(`Failed to load profile: ${error.message}`);
+      if (error) {
+        console.error('Failed to load profile:', error);
+        throw new Error(`Failed to load profile: ${error.message}`);
+      }
+      console.log('Loaded profile from Supabase:', learner);
       return {
         fullName: learner?.full_name || '',
-        email: learner?.email || ''
+        email: learner?.email || session.user.email || ''
       };
     },
 
