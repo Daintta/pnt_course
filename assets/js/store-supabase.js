@@ -14,24 +14,10 @@
     async getProfile() {
       const session = await Auth.getSession();
       if (!session) throw new Error('No active session');
-
-      const { data: learner, error } = await window.AuthModule.supabaseClient
-        .from('learners')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
-      if (error) {
-        console.error('Failed to load profile:', error);
-        return {
-          fullName: '',
-          email: session.user.email || ''
-        };
-      }
-      console.log('Loaded profile from Supabase:', learner);
+      // Use session email; full name can be edited in profile page
       return {
-        fullName: learner?.full_name || '',
-        email: learner?.email || session.user.email || ''
+        fullName: '',
+        email: session.user.email || ''
       };
     },
 
