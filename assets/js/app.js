@@ -200,7 +200,8 @@
       } else if (st === "passed") {
         actionBtn = `<span class="action-btn disabled">Complete</span>`;
       } else {
-        const nextLesson = st === "new" ? m.lessons[0] : m.lessons.find(l => !readSet(m.id).has(l.id));
+        const read = readSet(m.id);
+        const nextLesson = st === "new" ? m.lessons[0] : m.lessons.find(l => !read.has(l.id));
         const href = nextLesson ? `#/module/${m.id}/lesson/${nextLesson.id}` : `#/module/${m.id}`;
         const label = st === "progress" ? "Continue" : "Get Started";
         actionBtn = `<a href="${href}" class="action-btn">${label}</a>`;
