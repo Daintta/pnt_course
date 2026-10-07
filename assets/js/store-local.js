@@ -41,7 +41,10 @@
     async markRead(moduleId, lessonId) {
       const d = load();
       const set = new Set(d.read[moduleId] || []); set.add(lessonId);
-      d.read[moduleId] = Array.from(set); save(d);
+      d.read[moduleId] = Array.from(set);
+      console.log('Saving markRead:', moduleId, lessonId, 'State:', d);
+      save(d);
+      console.log('Saved to localStorage, verify:', localStorage.getItem(KEY));
     },
     async recordPractice(moduleId, score, total) {
       const d = load();
