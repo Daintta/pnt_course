@@ -1,5 +1,5 @@
 -- Enable RLS on all tables
--- alter table public.learners enable row level security;
+alter table public.learners enable row level security;
 alter table public.progress enable row level security;
 alter table public.assessment_attempts enable row level security;
 alter table public.certificates enable row level security;

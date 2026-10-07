@@ -70,6 +70,13 @@
       save(d);
       return { score, total, percent, passed, results, certificate, programmeCertificate };
     },
-    async resetProgress() { const d = load(); const p = d.profile; const n = blank(); n.profile = p; save(n); }
+    async resetProgress() { const d = load(); const p = d.profile; const n = blank(); n.profile = p; save(n); },
+    auth: {
+      async signOut() {
+        if (window.Auth) await Auth.signOut();
+        localStorage.removeItem(KEY);
+        window.location.href = 'signin.html';
+      }
+    }
   };
 })();
