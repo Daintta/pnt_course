@@ -36,6 +36,36 @@
     },
     async getState() {
       const d = load();
+
+      // Try to load from Supabase (source of truth)
+      if (window.Auth && window.AuthModule?.supabaseClient) {
+        try {
+          const session = await Auth.getSession();
+          if (session) {
+            const { data: progress, error: progressError } = await window.AuthModule.supabaseClient
+              .from('progress')
+              .select('module_num, lessons_read, attempts, assessment_attempted, assessment_score, passed')
+              .eq('learner_id', session.user.id);
+
+            if (!progressError && progress) {
+              // Merge Supabase data with localStorage
+              const read = {};
+              progress.forEach(p => {
+                const moduleId = `m${String(p.module_num).padStart(2, '0')}`;
+                read[moduleId] = p.lessons_read || [];
+              });
+              d.read = read;
+
+              // Save merged state back to localStorage
+              save(d);
+            }
+          }
+        } catch (e) {
+          console.error('Error loading progress from Supabase:', e);
+          // Fall back to localStorage
+        }
+      }
+
       return { read: d.read, practice: d.practice, attempts: d.attempts, certificates: d.certificates };
     },
     async markRead(moduleId, lessonId) {
