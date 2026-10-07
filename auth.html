@@ -145,6 +145,28 @@
         await Auth.init();
         await Auth.signIn(email, password);
         await Auth.syncLearnerProfile();
+
+        // Load profile from Supabase and save to localStorage
+        const session = await Auth.getSession();
+        if (session) {
+          const { data: learner } = await window.AuthModule.supabaseClient
+            .from('learners')
+            .select('full_name, email')
+            .eq('id', session.user.id)
+            .single();
+
+          if (learner) {
+            const existing = JSON.parse(localStorage.getItem('daintta-pnt-learning-v1') || '{}');
+            localStorage.setItem('daintta-pnt-learning-v1', JSON.stringify({
+              profile: { fullName: learner.full_name || email, email: learner.email },
+              read: existing.read || {},
+              practice: existing.practice || {},
+              attempts: existing.attempts || {},
+              certificates: existing.certificates || {}
+            }));
+          }
+        }
+
         window.location.href = 'index.html#/';
       } catch (error) {
         console.error('Sign-in error:', error);
