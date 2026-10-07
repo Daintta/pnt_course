@@ -79,7 +79,7 @@
     auth: {
       async signOut() {
         if (window.Auth) await Auth.signOut();
-        localStorage.removeItem(KEY);
+        // Keep progress in localStorage - it's user-specific and persists across devices
         window.location.href = 'auth.html';
       }
     }
