@@ -108,6 +108,7 @@
       try {
         await Auth.init();
         await Auth.signUp(email, password, fullName);
+        await Auth.signIn(email, password);
         window.location.href = 'index.html';
       } catch (error) {
         console.error('Sign-up error:', error);

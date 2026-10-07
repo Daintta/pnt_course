@@ -25,9 +25,15 @@
     kind: "local",
     async init() {
       if (!window.Auth) return { needsAuth: true, mode: "signin" };
-      const session = await Auth.getSession();
-      if (!session) return { needsAuth: true, mode: "signin" };
-      return { ok: true };
+      try {
+        await Auth.init();
+        const session = await Auth.getSession();
+        if (!session) return { needsAuth: true, mode: "signin" };
+        return { ok: true };
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        return { needsAuth: true, mode: "signin" };
+      }
     },
     async getProfile() { return load().profile; },
     async saveProfile(p) {

@@ -1,35 +1,45 @@
-const Auth = (() => {
-  let supabaseClient = null;
+if (!window.AuthModule) {
+  window.AuthModule = { supabaseClient: null, initPromise: null };
+}
 
+const Auth = (() => {
   async function init() {
+    if (window.AuthModule.supabaseClient) return;
+    if (window.AuthModule.initPromise) return window.AuthModule.initPromise;
+
     if (!window.config.SUPABASE_URL || !window.config.SUPABASE_ANON_KEY) {
       throw new Error('Supabase URL and anon key must be configured in config.js');
     }
-    if (!window.supabase) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0';
-      document.head.appendChild(script);
-      return new Promise((resolve, reject) => {
+
+    window.AuthModule.initPromise = new Promise((resolve, reject) => {
+      if (!window.supabase) {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0';
+        document.head.appendChild(script);
         script.onload = () => {
           const { createClient } = window.supabase;
-          supabaseClient = createClient(window.config.SUPABASE_URL, window.config.SUPABASE_ANON_KEY);
+          window.AuthModule.supabaseClient = createClient(window.config.SUPABASE_URL, window.config.SUPABASE_ANON_KEY);
           resolve();
         };
         script.onerror = () => reject(new Error('Failed to load Supabase SDK'));
-      });
-    }
-    const { createClient } = window.supabase;
-    supabaseClient = createClient(window.config.SUPABASE_URL, window.config.SUPABASE_ANON_KEY);
+      } else {
+        const { createClient } = window.supabase;
+        window.AuthModule.supabaseClient = createClient(window.config.SUPABASE_URL, window.config.SUPABASE_ANON_KEY);
+        resolve();
+      }
+    });
+
+    return window.AuthModule.initPromise;
   }
 
   async function signIn(email, password) {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const { data, error } = await window.AuthModule.supabaseClient.auth.signInWithPassword({ email, password });
     if (error) throw new Error(`Sign-in failed: ${error.message}`);
     return data.user;
   }
 
   async function signUp(email, password, fullName) {
-    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+    const { data, error } = await window.AuthModule.supabaseClient.auth.signUp({ email, password });
     if (error) throw new Error(`Sign-up failed: ${error.message}`);
     if (!data.user) throw new Error('Sign-up failed: no user returned');
     await syncLearnerProfile(data.user.id, email, fullName);
@@ -37,13 +47,13 @@ const Auth = (() => {
   }
 
   async function getSession() {
-    const { data: { session }, error } = await supabaseClient.auth.getSession();
+    const { data: { session }, error } = await window.AuthModule.supabaseClient.auth.getSession();
     if (error) throw error;
     return session;
   }
 
   async function signOut() {
-    await supabaseClient.auth.signOut();
+    await window.AuthModule.supabaseClient.auth.signOut();
   }
 
   async function syncLearnerProfile(userId = null, email = null, fullName = null) {
@@ -51,16 +61,16 @@ const Auth = (() => {
     const uid = userId || session?.user?.id;
     const userEmail = email || session?.user?.email;
     if (!uid) throw new Error('No active session');
-    const { data: existing } = await supabaseClient.from('learners').select('id, full_name').eq('id', uid).single();
+    const { data: existing } = await window.AuthModule.supabaseClient.from('learners').select('id, full_name').eq('id', uid).single();
     if (!existing) {
-      const { error } = await supabaseClient.from('learners').insert([{
+      const { error } = await window.AuthModule.supabaseClient.from('learners').insert([{
         id: uid,
         email: userEmail,
         full_name: fullName || userEmail.split('@')[0],
       }]);
       if (error) throw error;
     } else {
-      await supabaseClient.from('learners').update({ last_login: new Date().toISOString() }).eq('id', uid);
+      await window.AuthModule.supabaseClient.from('learners').update({ last_login: new Date().toISOString() }).eq('id', uid);
     }
   }
 
