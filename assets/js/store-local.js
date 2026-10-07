@@ -77,7 +77,7 @@
       async signOut() {
         if (window.Auth) await Auth.signOut();
         localStorage.removeItem(KEY);
-        window.location.href = 'signin.html';
+        window.location.href = 'auth.html';
       }
     }
   };
