@@ -94,10 +94,23 @@
       }
     });
 
+    // Reset form state when page loads
+    function resetForm() {
+      emailInput.disabled = false;
+      signinBtn.disabled = false;
+      signinBtn.textContent = 'Send Sign-in Link';
+      messageEl.className = 'message';
+      messageEl.textContent = '';
+    }
+
     // Handle magic link callback
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', handleCallback);
+      document.addEventListener('DOMContentLoaded', () => {
+        resetForm();
+        handleCallback();
+      });
     } else {
+      resetForm();
       handleCallback();
     }
   </script>
