@@ -1081,6 +1081,18 @@
       document.body.classList.remove("signed-out");
       $("#nav").hidden = false;
       profile = await PNT.store.getProfile();
+
+      // If Auth is available, sync email from session
+      if (window.Auth) {
+        try {
+          await Auth.init();
+          const authSession = await Auth.getSession();
+          if (authSession?.user?.email && !profile.email) {
+            profile.email = authSession.user.email;
+          }
+        } catch (e) { /* Auth not available */ }
+      }
+
       await refreshState();
       updateWho();
       const adminLink = $("#admin-link");

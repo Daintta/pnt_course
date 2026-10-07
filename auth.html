@@ -145,7 +145,7 @@
         await Auth.init();
         await Auth.signIn(email, password);
         await Auth.syncLearnerProfile();
-        window.location.href = 'index.html';
+        window.location.href = 'index.html#/';
       } catch (error) {
         console.error('Sign-in error:', error);
         showMessage(`Error: ${error.message}`, 'error');
@@ -180,7 +180,12 @@
         await Auth.init();
         await Auth.signUp(email, password, fullName);
         await Auth.signIn(email, password);
-        window.location.href = 'index.html';
+        // Save profile to localStorage so it's available when app loads
+        localStorage.setItem('daintta-pnt-learning-v1', JSON.stringify({
+          profile: { fullName: fullName, email: email },
+          read: {}, practice: {}, attempts: {}, certificates: {}
+        }));
+        window.location.href = 'index.html#/';
       } catch (error) {
         console.error('Sign-up error:', error);
         showMessage(`Error: ${error.message}`, 'error');
