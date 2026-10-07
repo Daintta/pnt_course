@@ -141,11 +141,12 @@ h3 { font-size: 19px; margin: 28px 0 8px; }
 .meter > i { display: block; height: 100%; background: var(--track); border-radius: 3px; }
 .meter.done > i { background: var(--lock); }
 .meter-label { font-size: 13px; color: var(--ink-soft); margin-top: 6px; }
+.m-status { display: flex; align-items: center; gap: 8px; }
 .status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); color: var(--ink-soft); white-space: nowrap; }
 .status.passed { background: var(--lock-soft); border-color: transparent; color: var(--lock); }
 .status.progress { background: var(--track-soft); border-color: transparent; color: var(--track); }
 .status.failed { background: var(--fault-soft); border-color: transparent; color: var(--fault); }
-.action-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 3px 12px; border-radius: 999px; background: var(--lock-soft); border: 1px solid transparent; color: var(--lock); text-decoration: none; cursor: pointer; transition: all 0.2s; margin-left: 6px; white-space: nowrap; }
+.action-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 3px 12px; border-radius: 999px; background: var(--lock-soft); border: 1px solid transparent; color: var(--lock); text-decoration: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .action-btn:hover { background: var(--lock); color: white; }
 .action-btn.disabled { background: var(--line); color: var(--ink-soft); cursor: not-allowed; }
 @media (max-width: 760px) {
