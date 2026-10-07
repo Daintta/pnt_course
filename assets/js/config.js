@@ -1,3 +1,10 @@
+// Supabase configuration
+// For local development: http://127.0.0.1:54321
+// For production Azure: https://your-subdomain/
+window.config = window.config || {};
+window.config.SUPABASE_URL = 'http://127.0.0.1:54321';
+window.config.SUPABASE_ANON_KEY = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'; // Replace with your local key from supabase start
+
 /* Site configuration. Edit these values to suit your organisation. */
 window.PNT = window.PNT || {};
 PNT.config = {

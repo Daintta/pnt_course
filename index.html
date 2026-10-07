@@ -12,6 +12,27 @@
   <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body>
+  <!-- Auth check: redirect to signin if not authenticated -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script>
+    (async function() {
+      try {
+        await Auth.init();
+        const session = await Auth.getSession();
+        if (!session) {
+          window.location.href = 'signin.html';
+          return;
+        }
+        await Auth.syncLearnerProfile();
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        window.location.href = 'signin.html';
+      }
+    })();
+  </script>
+
+  <!-- App content -->
   <a class="skip" href="#view">Skip to content</a>
   <header class="topbar">
     <div class="topbar-inner">

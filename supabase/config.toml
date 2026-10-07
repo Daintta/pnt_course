@@ -1,0 +1,10 @@
+[auth]
+site_url = "http://localhost:8000"
+redirect_urls = [
+  "http://localhost:8000",
+  "http://localhost:8000/signin.html",
+  "http://localhost:8000/index.html",
+  "http://127.0.0.1:8000",
+  "http://127.0.0.1:8000/signin.html",
+  "http://127.0.0.1:8000/index.html"
+]
