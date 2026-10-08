@@ -30,6 +30,15 @@ const linkReplacements = [
   }
 ];
 
+// URLs to add (if not already present)
+const linkAdditions = [
+  {
+    module: 'm06',
+    url: 'https://pages.nist.gov/mobile-threat-catalogue/gps.html',
+    searchText: 'NIST: Mobile Threat Catalogue'
+  }
+];
+
 function fixModule(modulePath) {
   const content = fs.readFileSync(modulePath, 'utf8');
 
@@ -64,6 +73,22 @@ function fixModule(modulePath) {
         modified = true;
       }
     });
+  });
+
+  // Handle link additions
+  const additions = linkAdditions.filter(a => a.module === moduleName);
+  additions.forEach(addition => {
+    // Find the "Further Learning" lesson and add link if not already there
+    const furtherLearningLesson = module.lessons.find(l => l.id === 'further-learning');
+    if (furtherLearningLesson && furtherLearningLesson.html) {
+      if (!furtherLearningLesson.html.includes(addition.url)) {
+        console.log(`  Adding in ${moduleName}: ${addition.searchText}...`);
+        // Find the last </p> and add new link before it
+        const newLink = `<p><strong>${addition.searchText}</strong><br/>\nCyberattack patterns and threat models for GPS and GNSS systems.<br/>\n<a href="${addition.url}">NIST Mobile Threat Catalogue</a></p>`;
+        furtherLearningLesson.html = furtherLearningLesson.html.replace('</div>', `${newLink}\n</div>`);
+        modified = true;
+      }
+    }
   });
 
   if (modified) {
