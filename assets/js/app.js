@@ -1245,11 +1245,14 @@
               .select('is_admin')
               .eq('id', authSession.user.id)
               .single();
-            if (!error && data) {
-              profile.isAdmin = data.is_admin;
+            if (!error && data?.is_admin) {
+              profile.isAdmin = true;
+              // Save to store to persist
+              await PNT.store.saveProfile(profile);
+              console.log('Admin status loaded: true');
             }
           }
-        } catch (e) { /* Auth not available */ }
+        } catch (e) { console.error('Auth check error:', e); }
       }
 
       await refreshState();

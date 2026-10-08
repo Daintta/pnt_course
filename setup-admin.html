@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup Admin - PNT Learning</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <style>
+    .setup-container {
+      max-width: 500px;
+      margin: 60px auto;
+      padding: 30px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      text-align: center;
+    }
+    .status {
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      font-size: 16px;
+    }
+    .status.loading {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+    .status.success {
+      background: #e8f5e9;
+      color: #27ae60;
+    }
+    .status.error {
+      background: #ffe6e1;
+      color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <div class="setup-container">
+    <h1>Admin Setup</h1>
+    <div id="status" class="status loading">Checking session...</div>
+  </div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script>
+    async function setupAdmin() {
+      try {
+        await Auth.init();
+        const session = await Auth.getSession();
+
+        if (!session) {
+          updateStatus('Not signed in. Please sign in first.', 'error');
+          return;
+        }
+
+        updateStatus(`Updating admin for ${session.user.email}...`, 'loading');
+
+        const { error } = await window.AuthModule.supabaseClient
+          .from('learners')
+          .update({ is_admin: true })
+          .eq('id', session.user.id);
+
+        if (error) {
+          updateStatus(`Error: ${error.message}`, 'error');
+          return;
+        }
+
+        updateStatus('✓ Admin privileges granted! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = 'index.html#/modules';
+        }, 2000);
+      } catch (e) {
+        updateStatus(`Error: ${e.message}`, 'error');
+      }
+    }
+
+    function updateStatus(msg, type) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = `status ${type}`;
+    }
+
+    setupAdmin();
+  </script>
+</body>
+</html>

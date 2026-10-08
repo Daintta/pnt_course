@@ -127,7 +127,7 @@
     async getProfile() { return load().profile; },
     async saveProfile(p) {
       const d = load();
-      d.profile = { fullName: p.fullName, email: p.email || "" };
+      d.profile = { fullName: p.fullName, email: p.email || "", isAdmin: p.isAdmin || false };
       // keep issued certificates in step with the learner's name
       Object.values(d.certificates).forEach((c) => { c.fullName = d.profile.fullName; c.email = d.profile.email; });
       save(d);
