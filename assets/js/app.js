@@ -1240,7 +1240,7 @@
           <td>${l.avgScore}%</td>
           <td>${l.certificatesIssued}</td>
           <td>${new Date(l.last_login || l.created_at).toLocaleDateString()}</td>
-          <td><button class="btn lock" onclick="adminResetPassword('${l.id}', '${esc(l.email)}')">Reset</button></td>
+          <td><button class="btn lock" onclick="adminResetPassword('${l.id}', '${esc(l.email)}')">Reset Password</button></td>
         </tr>
       `).join('');
 
@@ -1280,7 +1280,7 @@
               <td>${l.avgScore}%</td>
               <td>${l.certificatesIssued}</td>
               <td>${new Date(l.last_login || l.created_at).toLocaleDateString()}</td>
-              <td><button class="btn lock" onclick="adminResetPassword('${l.id}', '${esc(l.email)}')">Reset</button></td>
+              <td><button class="btn lock" onclick="adminResetPassword('${l.id}', '${esc(l.email)}')">Reset Password</button></td>
             </tr>
           `).join('');
           document.querySelector('tbody').innerHTML = filteredRows || '<tr><td colspan="7" style="padding: 20px; text-align: center;">No learners found</td></tr>';
