@@ -79,13 +79,17 @@
 
   /* ---------------- dashboard ---------------- */
   function satelliteTracking() {
-    // Calculate completion % for each learning level
-    const l1Complete = cert("m01") && cert("m02") && cert("m03") && cert("m04") ? 100 : 
-                       [cert("m01"), cert("m02"), cert("m03"), cert("m04")].filter(Boolean).length * 25;
-    const l2Complete = [cert("m01"), cert("m02"), cert("m03"), cert("m04"), cert("m05"), cert("m06"), cert("m07")]
-                       .filter(Boolean).length / 7 * 100;
-    const l3Complete = [cert("m01"), cert("m02"), cert("m03"), cert("m04"), cert("m05"), cert("m06"), cert("m07"), cert("m08"), cert("m09"), cert("m10")]
-                       .filter(Boolean).length / 10 * 100;
+    // Calculate completion % for each learning level based on certificates and progress
+    const calcLevelComplete = (moduleIds) => {
+      const completed = moduleIds.filter(id => cert(id)).length;
+      const inProgress = moduleIds.filter(id => !cert(id) && (lessonsRead(id) > 0 || attempts(id).length > 0)).length;
+      const pctWithProgress = completed + (inProgress * 0.5); // in-progress modules count as 50%
+      return Math.round((pctWithProgress / moduleIds.length) * 100);
+    };
+
+    const l1Complete = calcLevelComplete(["m01", "m02", "m03", "m04"]);
+    const l2Complete = calcLevelComplete(["m05", "m06", "m07"]);
+    const l3Complete = calcLevelComplete(["m08", "m09", "m10"]);
     
     // SVG dimensions
     const cx = 230, cy = 230;
@@ -104,7 +108,7 @@
     
     // Status colors and glow
     const status = (pct) => pct >= 100 ? "complete" : pct > 0 ? "progress" : "idle";
-    const glowColor = (st) => st === "complete" ? "#0BB3AD" : st === "progress" ? "#3876BE" : "#ccc";
+    const glowColor = (st) => st === "complete" ? "#0BB3AD" : st === "progress" ? "#c98200" : "#ccc";
     
     return `<div class="tracking-container">
       <svg class="tracking" viewBox="0 0 460 460" role="img" aria-label="Learning progress: Level 1 Foundation ${Math.round(l1Complete)}%, Level 2 Practitioner ${Math.round(l2Complete)}%, Level 3 Applied Engineering ${Math.round(l3Complete)}%. ${passedCount()} of ${catalog.length} modules passed.">
@@ -924,13 +928,18 @@
     
     render(`<h1>Resources</h1>
       <p class="lead">Source documents and external reference materials for the PNT Engineering programme.</p>
-      
-      <h2 style="margin-top:32px;margin-bottom:16px;font-size:18px;font-weight:600">Suggest a Resource</h2>
-      <p class="lead" style="font-size:14px;margin:0 0 16px">Know a resource that would help other learners? We'd love to hear about it.</p>
-      <div style="background:var(--surface);border:1px solid var(--line);padding:20px;border-radius:8px;margin-bottom:32px">
-        <a href="https://github.com/Daintta/pnt_course/issues/new?template=suggest-resource.md&labels=resource-suggestion" 
-           target="_blank" rel="noopener" class="btn" style="background:var(--primary-teal);color:var(--navy)">+ Suggest a Resource</a>
-        <p style="font-size:13px;color:var(--ink-soft);margin:12px 0 0">Opens GitHub (requires free account). Your suggestion will be reviewed and added to the learning programme.</p>
+
+      <div style="margin-bottom:32px">
+        <button id="suggest-toggle" class="btn secondary" style="margin-bottom:16px">+ Suggest a Resource</button>
+        <div id="suggest-form-container" style="display:none;background:var(--surface);border:1px solid var(--line);padding:20px;border-radius:8px;max-width:460px">
+          <form id="suggest-form" class="form">
+            <label>Resource title<input name="title" required placeholder="e.g. GPS Signal Processing Guide" maxlength="100"></label>
+            <label>URL<input name="url" type="url" required placeholder="https://example.com/resource"></label>
+            <label>Brief description<textarea name="description" placeholder="Why would this help other learners?" style="resize:vertical;min-height:80px;font-family:inherit;padding:10px 12px;border:1.5px solid var(--line);border-radius:4px;background:var(--paper);font-size:15px"></textarea></label>
+            <div class="btn-row" style="margin:0"><button class="btn" type="submit">Copy to Clipboard</button><button class="btn secondary" type="button" id="suggest-close">Close</button></div>
+            <div id="suggest-msg" aria-live="polite"></div>
+          </form>
+        </div>
       </div>
       
       <h2 style="margin-top:32px;margin-bottom:16px;font-size:18px;font-weight:600">External References</h2>
@@ -942,22 +951,61 @@
         </div>`).join("")}
       </div>
       
-      <h2 style="margin-top:32px;margin-bottom:16px;font-size:18px;font-weight:600">Source Documents</h2>
-      <p class="lead" style="font-size:14px;margin:0 0 16px">Access the Word documents used to create each module from SharePoint.</p>
-      <div class="resources">
-        ${sourceDocuments.map((d) => `<div class="resource-card">
-          <h3>Module ${pad(d.module)}: ${esc(d.title)}</h3>
-          <p style="font-size:13px;color:var(--ink-soft)">Source document</p>
-          <a class="btn" href="${(PNT?.sharePointDocs?.[d.module] || '#')}" target="_blank" rel="noopener">Open on SharePoint</a>
-        </div>`).join("")}
-      </div>
-      
       <h2 style="margin-top:32px;margin-bottom:16px;font-size:18px;font-weight:600">Further Learning by Module</h2>
       <p class="lead" style="font-size:14px;margin:0 0 16px">Curated further learning resources recommended within each module.</p>
       <div id="further-learning"><p class="loading" role="status">Loading further learning…</p></div>
       
 `, "Resources", "resources");
     fillFurtherLearning(furtherLearningFallback);
+
+    // Handle resource suggestion form toggle
+    const suggestToggle = $("#suggest-toggle");
+    const suggestContainer = $("#suggest-form-container");
+    const suggestClose = $("#suggest-close");
+
+    if (suggestToggle && suggestContainer) {
+      suggestToggle.addEventListener("click", () => {
+        suggestContainer.style.display = suggestContainer.style.display === "none" ? "block" : "none";
+        suggestToggle.textContent = suggestContainer.style.display === "none" ? "+ Suggest a Resource" : "− Suggest a Resource";
+      });
+
+      if (suggestClose) {
+        suggestClose.addEventListener("click", () => {
+          suggestContainer.style.display = "none";
+          suggestToggle.textContent = "+ Suggest a Resource";
+        });
+      }
+    }
+
+    // Handle resource suggestion form
+    const suggestForm = $("#suggest-form");
+    if (suggestForm) {
+      suggestForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const msg = $("#suggest-msg");
+        const btn = e.target.querySelector("button");
+        btn.disabled = true;
+        msg.innerHTML = "";
+
+        try {
+          const title = String(fd.get("title")).trim();
+          const url = String(fd.get("url")).trim();
+          const description = String(fd.get("description")).trim();
+          const suggestedBy = profile?.fullName || "Anonymous";
+
+          const formatted = `Resource Suggestion\n\nTitle: ${title}\nURL: ${url}\nDescription: ${description}\nSuggested by: ${suggestedBy}`;
+
+          await navigator.clipboard.writeText(formatted);
+          msg.innerHTML = `<div class="notice ok">Copied to clipboard! Paste it in a GitHub issue to share with the team.</div>`;
+          e.target.reset();
+        } catch (err) {
+          msg.innerHTML = `<div class="notice error">${esc(err.message)}</div>`;
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
   }
 
   /* ---------------- profile ---------------- */
