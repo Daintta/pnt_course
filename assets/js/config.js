@@ -6,7 +6,7 @@ window.config.SUPABASE_ANON_KEY = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAa
 /* Site configuration. Edit these values to suit your organisation. */
 window.PNT = window.PNT || {};
 PNT.config = {
-  appVersion: "0.9.11",          // shown in the footer; bump on every release
+  appVersion: "0.9.12",          // shown in the footer; bump on every release
   organisation: "Daintta",
   programmeTitle: "PNT Engineering",
   programmeSubtitle: "Foundation & Practitioner Learning Programme",
