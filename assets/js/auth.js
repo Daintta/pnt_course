@@ -77,3 +77,5 @@ const Auth = (() => {
 
   return { init, signIn, signUp, getSession, signOut, syncLearnerProfile };
 })();
+
+window.Auth = Auth;

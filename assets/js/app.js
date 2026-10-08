@@ -1232,10 +1232,12 @@
 
       // If Auth is available, sync email from session and check admin status
       let isAdmin = false;
+      console.log('[APP] Starting admin check...', 'window.Auth:', !!window.Auth);
       if (window.Auth) {
         try {
           await Auth.init();
           const authSession = await Auth.getSession();
+          console.log('[APP] Auth session:', authSession?.user?.email);
           if (authSession?.user?.email && !profile.email) {
             profile.email = authSession.user.email;
           }
@@ -1246,20 +1248,26 @@
               .select('is_admin')
               .eq('id', authSession.user.id)
               .single();
+            console.log('[APP] Admin check result:', { data, error, isAdmin: data?.is_admin });
             if (!error && data?.is_admin) {
               isAdmin = true;
               profile.isAdmin = true;
+              console.log('[APP] Admin flag set to true');
               // Save to store to persist
               await PNT.store.saveProfile(profile);
             }
           }
-        } catch (e) { console.error('Auth check error:', e); }
+        } catch (e) { console.error('[APP] Auth check error:', e); }
       }
 
       await refreshState();
       updateWho();
       const adminLink = $("#admin-link");
-      if (adminLink) adminLink.hidden = !isAdmin;
+      console.log('[APP] Setting admin link. isAdmin:', isAdmin, 'adminLink:', adminLink?.id);
+      if (adminLink) {
+        adminLink.hidden = !isAdmin;
+        console.log('[APP] Admin link hidden set to:', adminLink.hidden);
+      }
       route();
     } catch (err) {
       view().innerHTML = `<div class="notice error"><b>The app could not start.</b> ${esc(err.message)}</div>`;
