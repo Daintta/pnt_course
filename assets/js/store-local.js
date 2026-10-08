@@ -142,7 +142,7 @@
           if (session) {
             const { data: progress, error: progressError } = await window.AuthModule.supabaseClient
               .from('progress')
-              .select('module_num, lessons_read, attempts, assessment_attempted, assessment_score, passed')
+              .select('module_num, lessons_read, assessment_attempted, assessment_score, passed')
               .eq('learner_id', session.user.id);
 
             if (!progressError && progress) {
