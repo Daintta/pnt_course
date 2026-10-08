@@ -1199,6 +1199,100 @@
     }
   }
 
+  async function adminView() {
+    render(`<h1>Admin Dashboard</h1><div class="loading">Loading learners...</div>`, "Admin", "admin");
+
+    try {
+      const { data: learners, error } = await window.AuthModule.supabaseClient
+        .from('learners')
+        .select('id, email, full_name, created_at, last_login')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Load progress for each learner
+      const learnersWithProgress = await Promise.all(
+        (learners || []).map(async (learner) => {
+          const { data: progress } = await window.AuthModule.supabaseClient
+            .from('progress')
+            .select('module_num, passed, assessment_score')
+            .eq('learner_id', learner.id);
+
+          const modulesCompleted = (progress || []).filter(p => p.passed).length;
+          const avgScore = progress?.length > 0
+            ? Math.round(progress.filter(p => p.assessment_score).reduce((sum, p) => sum + (p.assessment_score || 0), 0) / progress.length)
+            : 0;
+
+          const { data: certs } = await window.AuthModule.supabaseClient
+            .from('certificates')
+            .select('id')
+            .eq('learner_id', learner.id);
+
+          return { ...learner, modulesCompleted, avgScore, certificatesIssued: certs?.length || 0 };
+        })
+      );
+
+      const rows = learnersWithProgress.map(l => `
+        <tr>
+          <td>${esc(l.full_name || l.email)}</td>
+          <td>${esc(l.email)}</td>
+          <td><span class="progress-badge ${l.modulesCompleted === 0 ? 'not-started' : l.modulesCompleted === C.totalModules ? 'complete' : 'in-progress'}">${l.modulesCompleted}/${C.totalModules}</span></td>
+          <td>${l.avgScore}%</td>
+          <td>${l.certificatesIssued}</td>
+          <td>${new Date(l.last_login || l.created_at).toLocaleDateString()}</td>
+          <td><button class="btn lock" onclick="adminResetPassword('${l.id}', '${esc(l.email)}')">Reset</button></td>
+        </tr>
+      `).join('');
+
+      render(`
+        <h1>Admin Dashboard</h1>
+        <input type="text" id="admin-search" class="search-box" placeholder="Search learners..." style="width: 100%; max-width: 400px; padding: 10px; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-color);">
+              <th style="text-align: left; padding: 12px;">Name</th>
+              <th style="text-align: left; padding: 12px;">Email</th>
+              <th style="text-align: left; padding: 12px;">Progress</th>
+              <th style="text-align: left; padding: 12px;">Avg Score</th>
+              <th style="text-align: left; padding: 12px;">Certificates</th>
+              <th style="text-align: left; padding: 12px;">Last Login</th>
+              <th style="text-align: left; padding: 12px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>${rows || '<tr><td colspan="7" style="padding: 20px; text-align: center;">No learners found</td></tr>'}</tbody>
+        </table>
+      `, "Admin", "admin");
+
+      // Search functionality
+      const searchInput = document.getElementById('admin-search');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const query = e.target.value.toLowerCase();
+          const filtered = learnersWithProgress.filter(l =>
+            l.full_name?.toLowerCase().includes(query) ||
+            l.email?.toLowerCase().includes(query)
+          );
+          const filteredRows = filtered.map(l => `
+            <tr>
+              <td>${esc(l.full_name || l.email)}</td>
+              <td>${esc(l.email)}</td>
+              <td><span class="progress-badge ${l.modulesCompleted === 0 ? 'not-started' : l.modulesCompleted === C.totalModules ? 'complete' : 'in-progress'}">${l.modulesCompleted}/${C.totalModules}</span></td>
+              <td>${l.avgScore}%</td>
+              <td>${l.certificatesIssued}</td>
+              <td>${new Date(l.last_login || l.created_at).toLocaleDateString()}</td>
+              <td><button class="btn lock" onclick="adminResetPassword('${l.id}', '${esc(l.email)}')">Reset</button></td>
+            </tr>
+          `).join('');
+          document.querySelector('tbody').innerHTML = filteredRows || '<tr><td colspan="7" style="padding: 20px; text-align: center;">No learners found</td></tr>';
+        });
+      }
+
+    } catch (e) {
+      console.error('Admin error:', e);
+      render(`<h1>Admin Dashboard</h1><div class="notice error">Error loading learners: ${esc(e.message)}</div>`, "Admin", "admin");
+    }
+  }
+
   let lastHash = location.hash;
   function route() {
     if (PNT._leaveGuard && !PNT._leaveGuard()) { history.replaceState(null, "", lastHash); return; }
@@ -1209,6 +1303,7 @@
     if (!a) return dashboard();
     if (a === "welcome") return profileView(true);
     if (a === "profile") return profileView(false);
+    if (a === "admin") return adminView();
     if (a === "glossary") return glossaryView();
     if (a === "resources") return resourcesView();
     if (a === "certificates") return certificatesView();
@@ -1342,6 +1437,19 @@
       }
     }
   });
+
+  // Admin password reset
+  window.adminResetPassword = async function(learnerId, email) {
+    if (!confirm(`Send password reset link to ${email}?`)) return;
+    try {
+      const { error } = await window.AuthModule.supabaseClient.auth
+        .resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password.html` });
+      if (error) throw error;
+      alert(`Password reset link sent to ${email}`);
+    } catch (e) {
+      alert(`Error: ${e.message}`);
+    }
+  };
 
   window.addEventListener("hashchange", () => { if (state) route(); });
   document.addEventListener("DOMContentLoaded", () => {
