@@ -83,9 +83,10 @@ function fixModule(modulePath) {
     if (furtherLearningLesson && furtherLearningLesson.html) {
       if (!furtherLearningLesson.html.includes(addition.url)) {
         console.log(`  Adding in ${moduleName}: ${addition.searchText}...`);
-        // Find the last </p> and add new link before it
-        const newLink = `<p><strong>${addition.searchText}</strong><br/>\nCyberattack patterns and threat models for GPS and GNSS systems.<br/>\n<a href="${addition.url}">NIST Mobile Threat Catalogue</a></p>`;
-        furtherLearningLesson.html = furtherLearningLesson.html.replace('</div>', `${newLink}\n</div>`);
+        // Find the GPS interference link and add NIST link right after it
+        const gpsInterferencePattern = /(<a href="https:\/\/www\.gps\.gov\/spectrum-interference-issues"[^<]*<\/a><\/p>)/;
+        const newLink = `$1\n<p><strong>${addition.searchText}</strong><br/>\nCyberattack patterns and threat models for GPS and GNSS systems.<br/>\n<a href="${addition.url}">NIST Mobile Threat Catalogue</a></p>`;
+        furtherLearningLesson.html = furtherLearningLesson.html.replace(gpsInterferencePattern, newLink);
         modified = true;
       }
     }
