@@ -21,7 +21,17 @@ PNT.config = {
   certificate: {
     signatoryName: "",
     signatoryTitle: ""
-  }
+  },
+
+  // Storage and data constants
+  storageKey: "daintta-pnt-learning-v1",
+  totalModules: 10,
+  modulesPerStage: [4, 3, 3],  // Foundation, Technology, Engineering
+  stages: [
+    { name: "Foundation", modules: [1, 2, 3, 4], note: "PNT concepts, GNSS and performance" },
+    { name: "Technology and resilience", modules: [5, 6, 7], note: "Alternative PNT, threats and resilient architectures" },
+    { name: "Engineering application", modules: [8, 9, 10], note: "Systems engineering, assurance and applied scenarios" }
+  ]
 };
 
 // SharePoint module documentation links

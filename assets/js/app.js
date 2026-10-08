@@ -13,11 +13,7 @@
   const modById = Object.fromEntries(catalog.map((m) => [m.id, m]));
   const assessById = Object.fromEntries((PNT.assessments || []).map((a) => [a.moduleId, a]));
   const fmtDate = (iso) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-  const STAGES = [
-    { name: "Foundation", range: [1, 4], note: "PNT concepts, GNSS and performance" },
-    { name: "Technology and resilience", range: [5, 7], note: "Alternative PNT, threats and resilient architectures" },
-    { name: "Engineering application", range: [8, 10], note: "Systems engineering, assurance and applied scenarios" },
-  ];
+  const STAGES = C.stages.map(s => ({ name: s.name, range: [s.modules[0], s.modules[s.modules.length - 1]], note: s.note }));
 
   let state = null;       // learner progress, from the store
   let profile = null;     // learner profile, from the store
@@ -266,7 +262,22 @@
   async function withModule(id, fn) {
     if (!modById[id]) return notFound();
     view().innerHTML = `<div class="loading" role="status">Loading module…</div>`;
-    try { fn(await loadModule(id)); } catch (e) { render(`<div class="notice error">${esc(e.message)}</div>`, "Error"); }
+    try {
+      fn(await loadModule(id));
+    } catch (e) {
+      console.error(`Module load error for ${id}:`, e);
+      render(`
+        <div style="max-width:600px;margin:40px auto">
+          <h1>Module Load Error</h1>
+          <p class="muted">Sorry, we couldn't load this module. This might be a temporary issue.</p>
+          <div class="notice error" style="margin:20px 0">${esc(e.message)}</div>
+          <div class="btn-row">
+            <button class="btn" onclick="location.reload()">Reload Page</button>
+            <a class="btn secondary" href="#/">Back to Modules</a>
+          </div>
+        </div>
+      `, "Error");
+    }
   }
 
   function moduleOverview(m) {
@@ -865,9 +876,19 @@
     return out;
   }
 
+  // Normalize URL for deduplication: lowercase, remove protocol/trailing slash/anchors
+  function normalizeUrl(url) {
+    if (!url) return '';
+    return url.toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/\/$/, '')
+      .split('#')[0];
+  }
+
   async function fillFurtherLearning(fallback) {
     const holder = $("#further-learning");
     if (!holder) return;
+    const seenUrls = new Set();  // Track URLs to skip duplicates
     const groups = await Promise.all(catalog.map(async (m) => {
       try {
         const mod = await loadModule(m.id);
@@ -880,18 +901,34 @@
     }));
     const target = $("#further-learning");
     if (!target) return;   // learner has left the Resources page
-    target.innerHTML = groups.filter((g) => g.items.length || g.error).map((g) => `
+
+    // Deduplicate resources: filter out URLs we've already seen
+    const moduleSections = groups.filter((g) => g.items.length || g.error).map((g) => {
+      const uniqueItems = g.items.filter((item) => {
+        const normalized = normalizeUrl(item.url);
+        if (seenUrls.has(normalized)) return false;
+        seenUrls.add(normalized);
+        return true;
+      });
+
+      // Only render module if it has items or had an error
+      if (!uniqueItems.length && !g.error) return '';
+
+      return `
         <div style="margin-bottom:32px">
           <h3 style="margin:16px 0 12px;font-size:16px;font-weight:600">Module ${pad(g.number)}</h3>
           ${g.error ? `<p class="muted small">Could not load this module's further learning. Please refresh the page.</p>` : ""}
-          <div class="resources">
-            ${g.items.map((item) => `<div class="resource-card">
+          ${uniqueItems.length ? `<div class="resources">
+            ${uniqueItems.map((item) => `<div class="resource-card" data-searchable="${esc((item.title + ' ' + (item.desc || '')).toLowerCase())}">
               <h4 style="margin:0 0 8px;font-size:14px;font-weight:500">${esc(item.title)}</h4>
               ${item.desc ? `<p style="font-size:13px;margin:0 0 12px">${esc(item.desc)}</p>` : ""}
               <a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener" style="font-size:12px;padding:6px 12px">Visit Resource</a>
             </div>`).join("")}
-          </div>
-        </div>`).join("");
+          </div>` : ''}
+        </div>`;
+    }).filter(Boolean).join("");
+
+    target.innerHTML = moduleSections;
     markNewTabLinks(target);
   }
 
@@ -942,20 +979,53 @@
         </div>
       </div>
       
+      <div style="margin-top:32px;margin-bottom:24px">
+        <input id="resource-search" type="text" placeholder="Search resources by title or keyword..." style="width:100%;max-width:480px;padding:12px 14px;border:1.5px solid var(--line);border-radius:4px;background:var(--surface);font-size:15px">
+      </div>
+
       <h2 style="margin-top:32px;margin-bottom:16px;font-size:18px;font-weight:600">External References</h2>
-      <div class="resources">
-        ${external.map((r) => `<div class="resource-card">
+      <div class="resources" id="external-resources">
+        ${external.map((r) => `<div class="resource-card" data-searchable="${esc(r.title + ' ' + r.desc).toLowerCase()}">
           <h3>${esc(r.title)}</h3>
           <p>${esc(r.desc)}</p>
           <a class="btn" href="${r.url}" target="_blank" rel="noopener">Read Document</a>
         </div>`).join("")}
       </div>
-      
+
       <h2 style="margin-top:32px;margin-bottom:16px;font-size:18px;font-weight:600">Further Learning by Module</h2>
       <p class="lead" style="font-size:14px;margin:0 0 16px">Curated further learning resources recommended within each module.</p>
       <div id="further-learning"><p class="loading" role="status">Loading further learning…</p></div>
       
 `, "Resources", "resources");
+
+    // Handle resource search/filter
+    const searchInput = $("#resource-search");
+    if (searchInput) {
+      const filterResources = () => {
+        const query = searchInput.value.toLowerCase();
+        const cards = $$(".resource-card");
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+          const searchable = card.getAttribute("data-searchable") || "";
+          const isMatch = !query || searchable.includes(query);
+          card.style.display = isMatch ? "" : "none";
+          if (isMatch) visibleCount++;
+        });
+
+        // Remove old "no results" message
+        const oldMsg = $(".no-results-message");
+        if (oldMsg) oldMsg.remove();
+
+        // Show "no results" only if there are no matches and user is searching
+        if (visibleCount === 0 && query) {
+          searchInput.insertAdjacentHTML("afterend", `<p class="no-results-message muted" style="margin:16px 0">No resources match "${esc(query)}"</p>`);
+        }
+      };
+
+      searchInput.addEventListener("input", filterResources);
+    }
+
     fillFurtherLearning(furtherLearningFallback);
 
     // Handle resource suggestion form toggle
@@ -984,8 +1054,11 @@
         e.preventDefault();
         const fd = new FormData(e.target);
         const msg = $("#suggest-msg");
-        const btn = e.target.querySelector("button");
+        const btn = e.target.querySelector("button[type='submit']");
+        const originalText = btn.textContent;
+
         btn.disabled = true;
+        btn.textContent = "Copying…";
         msg.innerHTML = "";
 
         try {
@@ -994,13 +1067,22 @@
           const description = String(fd.get("description")).trim();
           const suggestedBy = profile?.fullName || "Anonymous";
 
+          if (!title || !url || !description) {
+            throw new Error("Please fill in all fields.");
+          }
+
           const formatted = `Resource Suggestion\n\nTitle: ${title}\nURL: ${url}\nDescription: ${description}\nSuggested by: ${suggestedBy}`;
 
           await navigator.clipboard.writeText(formatted);
-          msg.innerHTML = `<div class="notice ok">Copied to clipboard! Paste it in a GitHub issue to share with the team.</div>`;
+          msg.innerHTML = `<div class="notice ok">✓ Copied to clipboard! Paste it in a GitHub issue to share with the team.</div>`;
           e.target.reset();
+          btn.textContent = originalText;
         } catch (err) {
-          msg.innerHTML = `<div class="notice error">${esc(err.message)}</div>`;
+          const errorMsg = err.name === 'NotAllowedError'
+            ? 'Clipboard access denied. Please copy manually: ' + err.message
+            : esc(err.message);
+          msg.innerHTML = `<div class="notice error">${errorMsg}</div>`;
+          btn.textContent = originalText;
         } finally {
           btn.disabled = false;
         }
@@ -1148,13 +1230,24 @@
       $("#nav").hidden = false;
       profile = await PNT.store.getProfile();
 
-      // If Auth is available, sync email from session
+      // If Auth is available, sync email from session and check admin status
       if (window.Auth) {
         try {
           await Auth.init();
           const authSession = await Auth.getSession();
           if (authSession?.user?.email && !profile.email) {
             profile.email = authSession.user.email;
+          }
+          // Check admin status from Supabase
+          if (authSession?.user?.id) {
+            const { data, error } = await window.AuthModule.supabaseClient
+              .from('learners')
+              .select('is_admin')
+              .eq('id', authSession.user.id)
+              .single();
+            if (!error && data) {
+              profile.isAdmin = data.is_admin;
+            }
           }
         } catch (e) { /* Auth not available */ }
       }
@@ -1169,8 +1262,79 @@
     }
   }
 
+  // Dark mode toggle
+  function initDarkMode() {
+    const toggle = $("#dark-mode-toggle");
+    const root = document.documentElement;
+    const storageKey = "pnt-theme";
+
+    // Initialize from localStorage or system preference
+    const saved = localStorage.getItem(storageKey);
+    const isDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+    const setTheme = (dark) => {
+      root.setAttribute("data-theme", dark ? "dark" : "light");
+      localStorage.setItem(storageKey, dark ? "dark" : "light");
+      if (toggle) toggle.textContent = dark ? "☀️" : "🌙";
+    };
+
+    setTheme(isDark);
+
+    if (toggle) {
+      toggle.addEventListener("click", () => {
+        const current = root.getAttribute("data-theme") === "dark";
+        setTheme(!current);
+      });
+    }
+  }
+
+  // Offline indicator
+  function initSyncIndicator() {
+    const indicator = $("#sync-status");
+    if (!indicator) return;
+
+    const updateStatus = () => {
+      indicator.classList.remove("offline", "syncing");
+      if (!navigator.onLine) {
+        indicator.classList.add("offline");
+        indicator.title = "Offline - changes will sync when online";
+      } else {
+        indicator.title = "Online";
+      }
+    };
+
+    updateStatus();
+    window.addEventListener("online", updateStatus);
+    window.addEventListener("offline", updateStatus);
+
+    // Expose function to show syncing state (called from store)
+    window.showSyncStatus = (isSyncing) => {
+      if (isSyncing) {
+        indicator.classList.remove("offline");
+        indicator.classList.add("syncing");
+        indicator.title = "Syncing changes...";
+      } else {
+        updateStatus();
+      }
+    };
+  }
+
+  // Process sync queue when coming back online
+  window.addEventListener("online", async () => {
+    console.log("Back online - processing sync queue...");
+    if (window.processSyncQueue) {
+      try {
+        await window.processSyncQueue();
+      } catch (e) {
+        console.error("Error processing sync queue:", e);
+      }
+    }
+  });
+
   window.addEventListener("hashchange", () => { if (state) route(); });
   document.addEventListener("DOMContentLoaded", () => {
+    initDarkMode();
+    initSyncIndicator();
     $("#lightbox .btn").addEventListener("click", () => $("#lightbox").close());
     $("#lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox") e.target.close(); });
     boot();

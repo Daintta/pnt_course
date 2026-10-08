@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - PNT Learning</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <style>
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 20px;
+    }
+
+    .admin-header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .admin-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      padding: 10px 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .btn-secondary {
+      padding: 10px 20px;
+      background: var(--teal-600);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-secondary:hover {
+      background: var(--teal-700);
+    }
+
+    .learners-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .learners-table th {
+      background: var(--border-color);
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .learners-table td {
+      padding: 12px 15px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .learners-table tr:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .learner-name {
+      font-weight: 500;
+    }
+
+    .progress-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .progress-not-started {
+      background: #f0f0f0;
+      color: #666;
+    }
+
+    .progress-in-progress {
+      background: #ffeaa7;
+      color: #d63031;
+    }
+
+    .progress-complete {
+      background: #a4de6c;
+      color: #27ae60;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      cursor: pointer;
+      border-radius: 3px;
+      color: var(--text-primary);
+    }
+
+    .btn-sm:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .btn-danger {
+      border-color: #e74c3c;
+      color: #e74c3c;
+    }
+
+    .btn-danger:hover {
+      background: #ffe6e1;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-primary);
+      border-radius: 8px;
+      padding: 30px;
+      max-width: 400px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      margin-bottom: 20px;
+      color: var(--text-secondary);
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn-primary {
+      padding: 10px 20px;
+      background: var(--teal-600);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      background: var(--teal-700);
+    }
+
+    .btn-cancel {
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state p {
+      margin: 10px 0;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-secondary);
+    }
+
+    .error {
+      background: #ffe6e1;
+      border: 1px solid #e74c3c;
+      color: #c0392b;
+      padding: 12px 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .success {
+      background: #e8f5e9;
+      border: 1px solid #27ae60;
+      color: #1b5e20;
+      padding: 12px 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .progress-not-started { background: #2a2a2a; color: #999; }
+      .progress-in-progress { background: #4a3c1a; color: #ffb74d; }
+      .progress-complete { background: #1b4d0e; color: #66bb6a; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <nav class="nav-bar">
+      <a href="index.html#/modules" class="logo">🛰️ PNT Learning</a>
+      <div class="nav-right">
+        <span id="sync-status" class="sync-indicator">●</span>
+        <button id="dark-mode-toggle" class="theme-toggle">🌙</button>
+        <button id="sign-out-btn" class="btn-nav">Sign Out</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="admin-container">
+    <div class="admin-header">
+      <div>
+        <h1>Admin Dashboard</h1>
+        <p style="margin: 5px 0 0 0; color: var(--text-secondary);">Manage learners and progress</p>
+      </div>
+      <div class="admin-controls">
+        <input type="text" id="search-input" class="search-box" placeholder="Search by name or email...">
+        <button id="export-csv-btn" class="btn-secondary">📥 Export CSV</button>
+      </div>
+    </div>
+
+    <div id="alert-container"></div>
+
+    <div id="learners-list">
+      <div class="loading">Loading learners...</div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="reset-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">Reset Password</div>
+        <div class="modal-body">
+          <p id="reset-email"></p>
+          <p style="font-size: 13px; margin-top: 10px;">A password reset link will be sent to this email address.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="closeResetModal()">Cancel</button>
+          <button class="btn-primary" onclick="confirmReset()">Send Reset Link</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>

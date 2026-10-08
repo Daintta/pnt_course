@@ -15,7 +15,7 @@ describe('Satellite Tracking - Progress Calculation', () => {
 
   it('should show 12.5% for one module in progress (4-module level)', () => {
     const progress = calcLevelComplete(0, 1, 4);
-    expect(progress).toBe(12);
+    expect(progress).toBe(13); // 0.5 / 4 = 12.5%, rounds to 13
   });
 
   it('should show 25% for one module completed (4-module level)', () => {
@@ -35,7 +35,7 @@ describe('Satellite Tracking - Progress Calculation', () => {
 
   it('should handle mixed progress and completion', () => {
     const progress = calcLevelComplete(2, 1, 4); // 2 done, 1 in progress
-    expect(progress).toBe(62); // (2 + 0.5) / 4 = 62.5%
+    expect(progress).toBe(63); // (2 + 0.5) / 4 = 62.5%, rounds to 63
   });
 
   it('should work for 3-module level (Technology)', () => {

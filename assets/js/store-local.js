@@ -2,7 +2,7 @@
  * Assessments are scored in browser. See README for store interface. */
 (function () {
   "use strict";
-  const KEY = "daintta-pnt-learning-v1";
+  const KEY = window.PNT?.config?.storageKey || "daintta-pnt-learning-v1";
   const blank = () => ({ profile: { fullName: "", email: "" }, read: {}, practice: {}, attempts: {}, certificates: {} });
   let mem = null;          // fallback if storage is blocked
   function load() {
@@ -20,6 +20,104 @@
     return `PNT-${tag}-${rand.slice(0, 4)}-${rand.slice(4)}`;
   }
   const version = () => (PNT.catalog[0] && PNT.catalog[0].version) || "";
+
+  // Sync queue for offline operations
+  const SYNC_QUEUE_KEY = "pnt-sync-queue";
+  const syncQueue = {
+    add(op) {
+      try {
+        const queue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || "[]");
+        queue.push({ ...op, queuedAt: new Date().toISOString() });
+        localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
+      } catch (e) { console.error('Failed to queue operation:', e); }
+    },
+    getAll() {
+      try {
+        return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || "[]");
+      } catch (e) { return []; }
+    },
+    clear() {
+      try { localStorage.removeItem(SYNC_QUEUE_KEY); } catch (e) { }
+    }
+  };
+
+  // Retry logic with exponential backoff and queue fallback
+  async function withRetry(fn, maxAttempts = 3, queueOp = null) {
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        window.showSyncStatus?.(true);
+        const result = await fn();
+        window.showSyncStatus?.(false);
+        return result;
+      } catch (err) {
+        if (i === maxAttempts - 1) {
+          // All retries failed - queue for later if offline
+          if (!navigator.onLine && queueOp) {
+            console.warn('Offline - operation queued for later');
+            syncQueue.add(queueOp);
+          }
+          window.showSyncStatus?.(false);
+          throw err;
+        }
+        if (!navigator.onLine) {
+          console.warn('Offline - operation queued for later');
+          if (queueOp) syncQueue.add(queueOp);
+          throw err;
+        }
+        const delay = Math.pow(2, i) * 1000; // 1s, 2s, 4s
+        console.warn(`Sync failed, retrying in ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+  }
+
+  // Process queued sync operations when coming back online
+  async function processSyncQueue() {
+    if (!navigator.onLine) return;
+
+    const queue = syncQueue.getAll();
+    if (!queue.length) return;
+
+    console.log(`Processing ${queue.length} queued operations...`);
+    let processed = 0;
+
+    for (const op of queue) {
+      try {
+        if (op.type === 'markRead' && window.Auth && window.AuthModule?.supabaseClient) {
+          const session = await Auth.getSession();
+          if (session) {
+            const d = load();
+            const moduleNum = parseInt(op.moduleId.substring(1), 10);
+            const { error } = await window.AuthModule.supabaseClient
+              .from('progress')
+              .upsert({
+                learner_id: session.user.id,
+                module_num: moduleNum,
+                lessons_read: d.read[op.moduleId] || [],
+                updated_at: new Date().toISOString()
+              });
+            if (error) throw error;
+          }
+        }
+        processed++;
+      } catch (e) {
+        console.error(`Failed to process queued ${op.type} operation:`, e);
+        break;
+      }
+    }
+
+    // Remove processed items from queue
+    if (processed > 0) {
+      const remaining = queue.slice(processed);
+      if (remaining.length) {
+        localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(remaining));
+      } else {
+        syncQueue.clear();
+      }
+      console.log(`Processed ${processed} queued operations`);
+      window.showSyncStatus?.(false);
+    }
+  }
 
   PNT.store = {
     kind: "local",
@@ -73,9 +171,9 @@
       const set = new Set(d.read[moduleId] || []); set.add(lessonId);
       d.read[moduleId] = Array.from(set); save(d);
 
-      // Also save to Supabase
+      // Also save to Supabase with retry and queue
       if (window.Auth && window.AuthModule?.supabaseClient) {
-        try {
+        const syncMarkRead = async () => {
           const session = await Auth.getSession();
           if (session) {
             const moduleNum = parseInt(moduleId.substring(1), 10);
@@ -87,11 +185,16 @@
                 lessons_read: d.read[moduleId],
                 updated_at: new Date().toISOString()
               });
-            if (error) console.error('Failed to save progress to DB:', error);
+            if (error) throw error;
           }
-        } catch (e) {
-          console.error('Error syncing progress to DB:', e);
-        }
+        };
+
+        withRetry(syncMarkRead, 3, {
+          type: 'markRead',
+          moduleId,
+          lessonId,
+          fn: syncMarkRead
+        }).catch(e => console.error('Failed to sync progress:', e));
       }
     },
     async recordPractice(moduleId, score, total) {
@@ -122,21 +225,24 @@
       }
       save(d);
 
-      // Sync to Supabase
+      // Sync to Supabase with retry
       if (window.Auth && window.AuthModule?.supabaseClient) {
-        try {
+        withRetry(async () => {
           const session = await Auth.getSession();
           if (session) {
+            window.showSyncStatus?.(true);
             const moduleNum = parseInt(moduleId.substring(1), 10);
             // Save attempt
-            await window.AuthModule.supabaseClient.from('assessment_attempts').insert({
+            let err = (await window.AuthModule.supabaseClient.from('assessment_attempts').insert({
               learner_id: session.user.id,
               module_num: moduleNum,
               answers: answers,
               score: score
-            });
+            })).error;
+            if (err) throw err;
+
             // Update progress with assessment result
-            await window.AuthModule.supabaseClient.from('progress').upsert({
+            err = (await window.AuthModule.supabaseClient.from('progress').upsert({
               learner_id: session.user.id,
               module_num: moduleNum,
               assessment_attempted: true,
@@ -144,20 +250,22 @@
               passed: passed,
               completed_at: passed ? now : null,
               updated_at: now
-            });
+            })).error;
+            if (err) throw err;
+
             // Save certificate if awarded
             if (certificate) {
-              await window.AuthModule.supabaseClient.from('certificates').insert({
+              err = (await window.AuthModule.supabaseClient.from('certificates').insert({
                 learner_id: session.user.id,
                 type: 'module',
                 module_num: moduleNum,
                 score: percent
-              });
+              })).error;
+              if (err) throw err;
             }
+            window.showSyncStatus?.(false);
           }
-        } catch (e) {
-          console.error('Error syncing assessment to DB:', e);
-        }
+        }).catch(e => console.error('Failed to sync assessment:', e));
       }
 
       return { score, total, percent, passed, results, certificate, programmeCertificate };
@@ -171,4 +279,7 @@
       }
     }
   };
+
+  // Expose sync queue processing globally
+  window.processSyncQueue = processSyncQueue;
 })();
