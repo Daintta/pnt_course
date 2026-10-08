@@ -1231,6 +1231,7 @@
       profile = await PNT.store.getProfile();
 
       // If Auth is available, sync email from session and check admin status
+      let isAdmin = false;
       if (window.Auth) {
         try {
           await Auth.init();
@@ -1246,10 +1247,10 @@
               .eq('id', authSession.user.id)
               .single();
             if (!error && data?.is_admin) {
+              isAdmin = true;
               profile.isAdmin = true;
               // Save to store to persist
               await PNT.store.saveProfile(profile);
-              console.log('Admin status loaded: true');
             }
           }
         } catch (e) { console.error('Auth check error:', e); }
@@ -1258,7 +1259,7 @@
       await refreshState();
       updateWho();
       const adminLink = $("#admin-link");
-      if (adminLink) adminLink.hidden = !(profile && profile.isAdmin);
+      if (adminLink) adminLink.hidden = !isAdmin;
       route();
     } catch (err) {
       view().innerHTML = `<div class="notice error"><b>The app could not start.</b> ${esc(err.message)}</div>`;
