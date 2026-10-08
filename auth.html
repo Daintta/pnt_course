@@ -4,40 +4,243 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sign in or Create Account - Daintta PNT Engineering</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/app.css">
   <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9f9f9;
+      --bg-tertiary: #f0f0f0;
+      --text-primary: #162738;
+      --text-secondary: #666666;
+      --border-color: #e0e0e0;
+      --teal-600: #0bb3ad;
+      --teal-700: #099a93;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #242424;
+        --bg-tertiary: #333333;
+        --text-primary: #ffffff;
+        --text-secondary: #999999;
+        --border-color: #333333;
+      }
+
+      :root[data-theme="dark"] {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #242424;
+        --bg-tertiary: #333333;
+        --text-primary: #ffffff;
+        --text-secondary: #999999;
+        --border-color: #333333;
+      }
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #162738 0%, #0a1a2e 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; color: #162738; }
-    .auth-container { background: white; border-radius: 12px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); overflow: hidden; max-width: 450px; width: 90%; }
-    .auth-hero { background: linear-gradient(135deg, #0BB3AD 0%, #162738 100%); padding: 40px 30px; text-align: center; }
-    .auth-hero h1 { color: white; font-size: 28px; margin-bottom: 8px; font-weight: 600; }
-    .auth-hero p { color: rgba(255, 255, 255, 0.9); font-size: 14px; }
-    .auth-tabs { display: flex; background: #f5f5f5; border-bottom: 1px solid #e0e0e0; }
-    .auth-tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 500; color: #666; border: none; background: none; transition: all 0.2s; }
-    .auth-tab:hover { background: #efefef; }
-    .auth-tab.active { color: #0BB3AD; background: white; border-bottom: 3px solid #0BB3AD; }
-    .auth-content { padding: 40px 30px; }
-    .form-section { display: none; }
-    .form-section.active { display: block; }
-    .form-group { margin-bottom: 24px; }
-    .form-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #162738; }
-    .form-group input { width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; transition: border-color 0.2s; }
-    .form-group input:focus { outline: none; border-color: #0BB3AD; }
-    .auth-button { width: 100%; padding: 12px; background: linear-gradient(135deg, #0BB3AD 0%, #099a93 100%); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-    .auth-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(11, 179, 173, 0.3); }
-    .auth-button:disabled { opacity: 0.7; cursor: not-allowed; }
-    .message { margin-top: 20px; padding: 12px; border-radius: 6px; font-size: 14px; display: none; }
-    .message.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; display: block; }
-    .message.error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; display: block; }
-    .auth-footer { padding: 20px 30px; background: #f9f9f9; font-size: 12px; color: #666; text-align: center; border-top: 1px solid #e0e0e0; }
+    body {
+      font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-tertiary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      padding: 20px;
+    }
+
+    .auth-header {
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .auth-header img {
+      height: 40px;
+      margin-bottom: 20px;
+    }
+
+    .auth-header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .auth-header p {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .auth-container {
+      background: var(--bg-primary);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      max-width: 450px;
+      width: 100%;
+    }
+
+    .auth-tabs {
+      display: flex;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border: none;
+      background: none;
+      transition: all 0.2s;
+    }
+
+    .auth-tab:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .auth-tab.active {
+      color: var(--teal-600);
+      background: var(--bg-primary);
+      border-bottom: 3px solid var(--teal-600);
+    }
+
+    .auth-content {
+      padding: 40px 30px;
+    }
+
+    .form-section {
+      display: none;
+    }
+
+    .form-section.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 14px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--teal-600);
+      box-shadow: 0 0 0 2px rgba(11, 179, 173, 0.1);
+    }
+
+    .auth-button {
+      width: 100%;
+      padding: 12px;
+      background: var(--teal-600);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .auth-button:hover:not(:disabled) {
+      background: var(--teal-700);
+    }
+
+    .auth-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+      border-left: 4px solid;
+    }
+
+    .message.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border-color: #c8e6c9;
+      display: block;
+    }
+
+    .message.error {
+      background: #ffebee;
+      color: #c62828;
+      border-color: #ffcdd2;
+      display: block;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .message.success {
+        background: rgba(46, 125, 50, 0.2);
+        color: #66bb6a;
+      }
+      .message.error {
+        background: rgba(198, 40, 40, 0.2);
+        color: #ef5350;
+      }
+    }
+
+    .auth-footer {
+      padding: 20px 30px;
+      background: var(--bg-secondary);
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+    }
   </style>
 </head>
 <body>
-  <div class="auth-container">
-    <div class="auth-hero">
-      <h1>Daintta PNT Engineering</h1>
-      <p>Sign in or create your account</p>
-    </div>
+  <button id="dark-mode-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
 
+  <div class="auth-header">
+    <img src="assets/img/logo-daintta.svg" alt="Daintta" />
+    <h1>PNT Engineering</h1>
+    <p>Sign in or create your account</p>
+  </div>
+
+  <div class="auth-container">
     <div class="auth-tabs">
       <button class="auth-tab active" data-mode="signin">Sign In</button>
       <button class="auth-tab" data-mode="signup">Create Account</button>
@@ -227,6 +430,38 @@
       document.addEventListener('DOMContentLoaded', resetForms);
     } else {
       resetForms();
+    }
+
+    // Dark mode initialization
+    function initDarkMode() {
+      const toggle = document.getElementById('dark-mode-toggle');
+      const root = document.documentElement;
+      const storageKey = 'pnt-theme';
+
+      const saved = localStorage.getItem(storageKey);
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDark = saved ? saved === 'dark' : prefersDark;
+
+      const setTheme = (dark) => {
+        root.setAttribute('data-theme', dark ? 'dark' : 'light');
+        localStorage.setItem(storageKey, dark ? 'dark' : 'light');
+        if (toggle) toggle.textContent = dark ? '☀️' : '🌙';
+      };
+
+      setTheme(isDark);
+
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          const current = root.getAttribute('data-theme') === 'dark';
+          setTheme(!current);
+        });
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initDarkMode);
+    } else {
+      initDarkMode();
     }
   </script>
 </body>
