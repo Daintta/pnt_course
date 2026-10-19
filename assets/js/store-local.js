@@ -83,22 +83,21 @@
 
     for (const op of queue) {
       try {
-        if (op.type === 'markRead' && window.Auth && window.AuthModule?.supabaseClient) {
-          const session = await Auth.getSession();
-          if (session) {
-            const d = load();
-            const moduleNum = parseInt(op.moduleId.substring(1), 10);
-            const { error } = await window.AuthModule.supabaseClient
-              .from('progress')
-              .upsert({
-                learner_id: session.user.id,
-                module_num: moduleNum,
-                lessons_read: d.read[op.moduleId] || [],
-                updated_at: new Date().toISOString()
-              });
-            if (error) throw error;
-          }
-        }
+        // Stop at the first operation that cannot be sent yet, so it and everything after it stay queued
+        if (op.type !== 'markRead' || !(window.Auth && window.AuthModule?.supabaseClient)) break;
+        const session = await Auth.getSession();
+        if (!session) break;
+        const d = load();
+        const moduleNum = parseInt(op.moduleId.substring(1), 10);
+        const { error } = await window.AuthModule.supabaseClient
+          .from('progress')
+          .upsert({
+            learner_id: session.user.id,
+            module_num: moduleNum,
+            lessons_read: d.read[op.moduleId] || [],
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'learner_id,module_num' });
+        if (error) throw error;
         processed++;
       } catch (e) {
         console.error(`Failed to process queued ${op.type} operation:`, e);
@@ -146,13 +145,11 @@
               .eq('learner_id', session.user.id);
 
             if (!progressError && progress) {
-              // Merge Supabase data with localStorage
-              const read = {};
+              // Merge Supabase data with localStorage so lessons read offline are not lost
               progress.forEach(p => {
                 const moduleId = `m${String(p.module_num).padStart(2, '0')}`;
-                read[moduleId] = p.lessons_read || [];
+                d.read[moduleId] = Array.from(new Set([...(d.read[moduleId] || []), ...(p.lessons_read || [])]));
               });
-              d.read = read;
 
               // Save merged state back to localStorage
               save(d);
@@ -184,7 +181,7 @@
                 module_num: moduleNum,
                 lessons_read: d.read[moduleId],
                 updated_at: new Date().toISOString()
-              });
+              }, { onConflict: 'learner_id,module_num' });
             if (error) throw error;
           }
         };
@@ -225,20 +222,22 @@
       }
       save(d);
 
-      // Sync to Supabase with retry
+      // Sync to Supabase with retry. Every write is keyed so a retry updates the same row instead of adding one.
       if (window.Auth && window.AuthModule?.supabaseClient) {
+        const attemptId = (window.crypto || window.msCrypto).randomUUID();
         withRetry(async () => {
           const session = await Auth.getSession();
           if (session) {
             window.showSyncStatus?.(true);
             const moduleNum = parseInt(moduleId.substring(1), 10);
-            // Save attempt
-            let err = (await window.AuthModule.supabaseClient.from('assessment_attempts').insert({
+            // Save attempt (one row per attempt id)
+            let err = (await window.AuthModule.supabaseClient.from('assessment_attempts').upsert({
+              id: attemptId,
               learner_id: session.user.id,
               module_num: moduleNum,
               answers: answers,
               score: score
-            })).error;
+            }, { onConflict: 'id', ignoreDuplicates: true })).error;
             if (err) throw err;
 
             // Update progress with assessment result
@@ -250,17 +249,17 @@
               passed: passed,
               completed_at: passed ? now : null,
               updated_at: now
-            })).error;
+            }, { onConflict: 'learner_id,module_num' })).error;
             if (err) throw err;
 
-            // Save certificate if awarded
+            // Save certificate if awarded (one per learner and module)
             if (certificate) {
-              err = (await window.AuthModule.supabaseClient.from('certificates').insert({
+              err = (await window.AuthModule.supabaseClient.from('certificates').upsert({
                 learner_id: session.user.id,
                 type: 'module',
                 module_num: moduleNum,
                 score: percent
-              })).error;
+              }, { onConflict: 'learner_id,type,module_num', ignoreDuplicates: true })).error;
               if (err) throw err;
             }
             window.showSyncStatus?.(false);

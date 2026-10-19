@@ -224,7 +224,7 @@
       `).join('') || '<li>No progress</li>';
 
       showAlert(`
-        <strong>${learner?.full_name || learner?.email}</strong>
+        <strong>${escapeHtml(learner?.full_name || learner?.email || '')}</strong>
         <ul style="margin-top: 10px;">${details}</ul>
       `, 'info');
     } catch (e) {
@@ -260,10 +260,10 @@
 
       if (error) throw error;
 
-      showAlert(`Password reset link sent to ${learner.email}`, 'success');
+      showAlert(`Password reset link sent to ${escapeHtml(learner.email)}`, 'success');
     } catch (e) {
       console.error('Error resetting password:', e);
-      showAlert('Failed to send reset link: ' + e.message, 'error');
+      showAlert('Failed to send reset link: ' + escapeHtml(e.message), 'error');
     }
   };
 
