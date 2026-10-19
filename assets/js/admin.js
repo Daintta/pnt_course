@@ -255,7 +255,7 @@
 
       const { error } = await window.AuthModule.supabaseClient.auth
         .resetPasswordForEmail(learner.email, {
-          redirectTo: `${window.location.origin}/reset-password.html`
+          redirectTo: new URL('reset-password.html', window.location.href).href
         });
 
       if (error) throw error;

@@ -1447,7 +1447,7 @@
     if (!confirm(`Send password reset link to ${email}?`)) return;
     try {
       const { error } = await window.AuthModule.supabaseClient.auth
-        .resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password.html` });
+        .resetPasswordForEmail(email, { redirectTo: new URL('reset-password.html', window.location.href).href });
       if (error) throw error;
       alert(`Password reset link sent to ${email}`);
     } catch (e) {
