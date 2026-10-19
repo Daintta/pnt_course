@@ -1,12 +1,11 @@
 // Supabase configuration
 window.config = window.config || {};
-// Local development uses the Supabase stack from 'supabase start'. Any other host uses production.
-// The publishable key is safe to share; it only allows what the row-level security rules permit.
+// Local testing (localhost) keeps progress in the browser and does not use Supabase.
+// The live site uses the self-hosted Supabase instance. The publishable key is safe to share;
+// it only allows what the row-level security rules permit.
 const IS_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-window.config.SUPABASE_URL = IS_LOCAL ? 'http://127.0.0.1:54321' : 'https://pnt-api.daintta.com';
-window.config.SUPABASE_ANON_KEY = IS_LOCAL
-  ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'
-  : ''; // TODO: production publishable key from Supabase Studio
+window.config.SUPABASE_URL = IS_LOCAL ? '' : 'https://pnt-api.daintta.com';
+window.config.SUPABASE_ANON_KEY = ''; // TODO: publishable key from the self-hosted Supabase Studio
 
 /* Site configuration. Edit these values to suit your organisation. */
 window.PNT = window.PNT || {};
