@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.13 — 19 October 2026
+### Changed
+- Module 1: revised sections 2.1 Positioning, 2.3 Timing and 3.1 The PNT Chain.
+- Glossary: added ECI, ENU, NED, GPS Time, TAI, Unix Time and UTC.
+- Certificates: updated the Daintta logo on module and pathway certificates.
+### Fixed
+- Module 1 match-question wording now matches the revised Positioning and Timing text.
+
 ## v0.9.11 — 5 October 2026
 Accessibility and colour pass following a WCAG 2.2 AA audit (axe-core 4.13, light and dark mode, 15 page types).
 ### Changed
