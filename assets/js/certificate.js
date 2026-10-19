@@ -23,6 +23,7 @@
   const DEFAULT_ASSETS = {
     template: 'assets/certs/certificate-template.pdf',
     pathwayTemplate: 'assets/certs/certificate-template-pathway.pdf',
+    logo: 'assets/img/logo-daintta-white.png',
     fonts: {
       Regular:  'assets/fonts/IBMPlexSans-Regular.ttf',
       Medium:   'assets/fonts/IBMPlexSans-Medium.ttf',
@@ -52,6 +53,15 @@
     sentence:    { x: 205.5, y: 352.2, size: 11.29, tracking: -0.14, minSize: 9, font: 'Regular', color: SLATE, maxWidth: 360 },
     scoreLabel1: { x: 370.4, y: 40.0,  size: 7.14, tracking: 0.92,  minSize: 6, font: 'SemiBold', color: LABEL, maxWidth: 135 },
     scoreLabel2: { x: 370.4, y: 29.4,  size: 7.14, tracking: 0.92,  minSize: 6, font: 'SemiBold', color: LABEL, maxWidth: 135 },
+  };
+
+  // Logo drawn over the logo already printed in the template artwork (top-left of the navy panel).
+  // The cover box is filled with the panel colour so the old logo is hidden.
+  // Units: PDF points, origin bottom-left.
+  const PANEL_NAVY = '#061E3B';
+  const LOGO_LAYOUT = {
+    cover: { x: 15.8, y: 536.0, w: 128.8, h: 35.6 },
+    image: { x: 20.3, y: 540.7, w: 119.7, h: 26.2 },
   };
 
   const PATHWAYS = {
@@ -128,7 +138,16 @@
     for (const [w, src] of Object.entries(Object.assign({}, DEFAULT_ASSETS.fonts, assets.fonts))) {
       fonts[w] = await pdf.embedFont(await load(src), { subset: true });
     }
-    return { pdf, fonts, page: pdf.getPage(0) };
+    const page = pdf.getPage(0);
+    await drawLogo(pdf, page, assets.logo);
+    return { pdf, fonts, page };
+  }
+
+  async function drawLogo(pdf, page, logoSrc) {
+    const logo = await pdf.embedPng(await load(logoSrc));
+    const { cover, image } = LOGO_LAYOUT;
+    page.drawRectangle({ x: cover.x, y: cover.y, width: cover.w, height: cover.h, color: hex(PANEL_NAVY) });
+    page.drawImage(logo, { x: image.x, y: image.y, width: image.w, height: image.h });
   }
 
   function setMeta(pdf, heading, name, certId) {
