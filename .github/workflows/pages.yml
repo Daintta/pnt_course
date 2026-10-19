@@ -24,7 +24,7 @@ jobs:
         run: |
           mkdir _site
           cp -r index.html assets content _site/
-          for f in admin.html verify.html; do [ -f "$f" ] && cp "$f" _site/; done
+          for f in auth.html reset-password.html admin.html verify.html; do [ -f "$f" ] && cp "$f" _site/; done
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
