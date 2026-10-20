@@ -444,11 +444,13 @@
       window.removeEventListener("beforeunload", leaveGuard); dirty = false; PNT._leaveGuard = null; return true;
     };
 
+    // Always returns true or false. classList.toggle treats undefined as "flip", so a non-boolean
+    // result would switch the progress dot on and off on every answer.
     const isAnswered = (q) => {
       const v = answers[q.id];
-      if (q.type === "match") return v && q.left.every((l) => v[l.id]);
+      if (q.type === "match") return !!v && q.left.every((l) => !!v[l.id]);
       if (q.type === "order") return orderTouched.has(q.id);
-      if (q.type === "multi") return v && v.length > 0;
+      if (q.type === "multi") return !!v && v.length > 0;
       return !!v;
     };
     const canonical = (q) => {
@@ -519,7 +521,7 @@
       const rv = $("#review"); if (rv) rv.addEventListener("click", () => { if (q.type === "order") orderTouched.add(q.id); review(); });
     }
     function refreshDots() {
-      $$(".qdots button", view()).forEach((b, i) => b.classList.toggle("answered", isAnswered(qs[i])));
+      $$(".qdots button", view()).forEach((b, i) => b.classList.toggle("answered", isAnswered(qs[i]) === true));
     }
     function review() {
       const missing = qs.map((q, i) => (isAnswered(q) ? null : i + 1)).filter(Boolean);
