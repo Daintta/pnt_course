@@ -1303,7 +1303,11 @@
     if (!a) return dashboard();
     if (a === "welcome") return profileView(true);
     if (a === "profile") return profileView(false);
-    if (a === "admin") return adminView();
+    if (a === "admin") {
+      // Only admins see the dashboard. Row-level security stops the data itself, this stops the page.
+      if (!profile.isAdmin) { location.hash = "#/"; return; }
+      return adminView();
+    }
     if (a === "glossary") return glossaryView();
     if (a === "resources") return resourcesView();
     if (a === "certificates") return certificatesView();
@@ -1443,7 +1447,7 @@
     if (!confirm(`Send password reset link to ${email}?`)) return;
     try {
       const { error } = await window.AuthModule.supabaseClient.auth
-        .resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password.html` });
+        .resetPasswordForEmail(email, { redirectTo: new URL('reset-password.html', window.location.href).href });
       if (error) throw error;
       alert(`Password reset link sent to ${email}`);
     } catch (e) {
