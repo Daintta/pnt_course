@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.14 — 20 October 2026
+### Changed
+- Progress and certificates are stored in each learner's browser on the live site. The live site no longer contacts a database.
+- Removed the production database address from the example environment file.
+- `node_modules` is no longer tracked in git. It is ignored along with `.env.local` and `supabase/.temp/`.
+### Fixed
+- Test tools (vitest, @vitest/ui, @vitest/coverage-v8) upgraded from 1.x to 5.x, resolving 10 open Dependabot alerts. These are development-only and not part of the published site.
+
 ## v0.9.13 — 19 October 2026
 ### Changed
 - Module 1: revised sections 2.1 Positioning, 2.3 Timing and 3.1 The PNT Chain.
