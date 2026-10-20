@@ -1,4 +1,6 @@
 __pycache__/
 .DS_Store
 *.pyc
-.env.localsupabase/.temp
+.env.local
+node_modules/
+supabase/.temp/
