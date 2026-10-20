@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.9.16 — 20 October 2026
+### Fixed
+- Assessment progress dots: answering a question no longer lights up or clears unrelated questions. Affected matching and multiple-select questions.
+
 ## v0.9.15 — 20 October 2026
 ### Changed
 - Progress is described as saved in this browser only, on the start and details pages.
