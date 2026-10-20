@@ -16,6 +16,7 @@
   const STAGES = C.stages.map(s => ({ name: s.name, range: [s.modules[0], s.modules[s.modules.length - 1]], note: s.note }));
 
   let state = null;       // learner progress, from the store
+  const NAME_MAX = 100;
   let profile = null;     // learner profile, from the store
 
   /* ---------------- content loading ---------------- */
@@ -1092,31 +1093,37 @@
 
   /* ---------------- profile ---------------- */
   function profileView(first) {
-    const canEditEmail = !PNT.store.auth;
+    // Progress is stored in this browser only, so the email is entered by the learner.
     render(`<h1>${first ? "Welcome" : "Your details"}</h1>
-      <p class="lead">${first ? `Before you start, enter your name as it should appear on your certificates.` : "Your name appears on every certificate you earn, including ones already issued."}</p>
+      <p class="lead">${first ? `Before you start, enter your name as it should appear on your certificates. Your progress and certificates are saved in this browser only.` : "Your name appears on every certificate you earn, including ones already issued."}</p>
       <form class="form" id="pf">
-        <label>Full name<input name="fullName" required autocomplete="name" value="${esc(profile.fullName || "")}"></label>
-        <label>Work email ${canEditEmail ? `<span class="hint">Optional. Shown on certificates so your organisation can identify you.</span>` : ""}<input name="email" type="email" autocomplete="email" value="${esc(profile.email || "")}" ${canEditEmail ? "" : "readonly"}></label>
+        <label>Full name<input name="fullName" required maxlength="${NAME_MAX}" autocomplete="name" value="${esc(profile.fullName || "")}"></label>
+        <label>Work email <span class="hint">Optional. Shown on certificates so your organisation can identify you.</span><input name="email" type="email" autocomplete="email" value="${esc(profile.email || "")}"></label>
         <div class="btn-row" style="margin:0"><button class="btn">${first ? "Start learning" : "Save details"}</button></div>
         <div id="pmsg" aria-live="polite"></div>
       </form>
       ${!first ? `<h2>Progress</h2>
-        <p class="muted" style="max-width:62ch">Your progress and certificates are saved securely in Daintta's systems. You can access them from any device by signing in with your email. Download your certificates as PDFs to keep a permanent copy.</p>` : ""}
-      ${!first && PNT.store.auth ? `<div class="btn-row"><button class="btn secondary" id="signout">Sign out</button></div>` : ""}`, "Your details", "profile");
+        <p class="muted" style="max-width:62ch">Your progress and certificates are saved in this browser only. Clearing your browser data or using a different browser or device will remove them. Download your certificates as PDFs to keep a permanent copy.</p>` : ""}
+      ${!first ? `<div class="btn-row"><button class="btn secondary" id="clear-progress">Clear my progress on this device</button></div>` : ""}`, "Your details", "profile");
     $("#pf").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       const fullName = String(fd.get("fullName")).trim().replace(/\s+/g, " ");
       if (fullName.length < 2) { $("#pmsg").innerHTML = `<div class="notice error">Enter your full name.</div>`; return; }
+      if (fullName.length > NAME_MAX) { $("#pmsg").innerHTML = `<div class="notice error">Your full name must be ${NAME_MAX} characters or fewer.</div>`; return; }
       try {
         await PNT.store.saveProfile({ fullName, email: String(fd.get("email") || "").trim() });
         profile = await PNT.store.getProfile(); await refreshState(); updateWho();
         if (first) location.hash = "#/"; else $("#pmsg").innerHTML = `<div class="notice ok">Details saved.</div>`;
       } catch (err) { $("#pmsg").innerHTML = `<div class="notice error">${esc(err.message)}</div>`; }
     });
-    const so = $("#signout");
-    if (so) so.addEventListener("click", async () => { await PNT.store.auth.signOut(); });
+    const clear = $("#clear-progress");
+    if (clear) clear.addEventListener("click", async () => {
+      if (!confirm("Clear all progress and certificates saved on this device? Your name and email will be kept.")) return;
+      await PNT.store.resetProgress();
+      await refreshState(); updateWho();
+      $("#pmsg").innerHTML = `<div class="notice ok">Progress cleared on this device.</div>`;
+    });
   }
 
   /* ---------------- sign in (server builds only) ---------------- */

@@ -1,6 +1,6 @@
 {
   "name": "pnt-learning-app",
-  "version": "0.9.14",
+  "version": "0.9.15",
   "type": "module",
   "scripts": {
     "test": "vitest",

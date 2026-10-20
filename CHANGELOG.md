@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.15 — 20 October 2026
+### Changed
+- Progress is described as saved in this browser only, on the start and details pages.
+- Full name is limited to 100 characters.
+### Fixed
+- Sign out did nothing on the live site. It's replaced with "Clear my progress on this device", which keeps your name and email.
+- The work email field was read-only, so typing did nothing. It's editable again.
+
 ## v0.9.14 — 20 October 2026
 ### Changed
 - Progress and certificates are stored in each learner's browser on the live site. The live site no longer contacts a database.
