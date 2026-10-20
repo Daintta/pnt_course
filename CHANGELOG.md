@@ -1,21 +1,5 @@
 # Changelog
 
-## v0.9.14 — 20 October 2026
-### Changed
-- Live site: database address is chosen by hostname, so localhost and the live site no longer share a configuration.
-- Admins can read all learner progress, attempts and certificates (row-level security via an `is_admin()` helper).
-- Learners can save their own certificates to the database.
-- Password reset links work under the GitHub Pages subfolder.
-- Pages deploy includes the sign-in and password reset pages.
-- Resource suggestions require a signed-in user and validate their input.
-### Fixed
-- Admin page: learner names and error messages are escaped; `#/admin` requires an admin profile.
-- Assessment attempts and certificates are saved once, even when a sync is retried.
-- Progress saves name their unique key, so they no longer fail.
-- Lessons read offline are kept when progress is loaded from the database.
-- Queued progress updates stay queued until they reach the database.
-- `.gitignore` ignores `.env.local` and `supabase/.temp/`.
-
 ## v0.9.11 — 5 October 2026
 Accessibility and colour pass following a WCAG 2.2 AA audit (axe-core 4.13, light and dark mode, 15 page types).
 ### Changed
