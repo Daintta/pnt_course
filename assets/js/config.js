@@ -1,7 +1,8 @@
 // Supabase configuration
 window.config = window.config || {};
-window.config.SUPABASE_URL = 'http://127.0.0.1:54321';
-window.config.SUPABASE_ANON_KEY = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
+// Progress and certificates are stored in each learner's browser. No database is used.
+window.config.SUPABASE_URL = '';
+window.config.SUPABASE_ANON_KEY = '';
 
 /* Site configuration. Edit these values to suit your organisation. */
 window.PNT = window.PNT || {};
