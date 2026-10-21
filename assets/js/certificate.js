@@ -24,12 +24,11 @@
     template: 'assets/certs/certificate-template.pdf',
     pathwayTemplate: 'assets/certs/certificate-template-pathway.pdf',
     logo: 'assets/img/logo-daintta-white.png',
-    // Arimo ships Regular and Bold only, so Medium uses Regular and SemiBold uses Bold.
     fonts: {
-      Regular:  'assets/fonts/Arimo-Regular.ttf',
-      Medium:   'assets/fonts/Arimo-Regular.ttf',
-      SemiBold: 'assets/fonts/Arimo-Bold.ttf',
-      Bold:     'assets/fonts/Arimo-Bold.ttf',
+      Regular:  'assets/fonts/IBMPlexSans-Regular.ttf',
+      Medium:   'assets/fonts/IBMPlexSans-Medium.ttf',
+      SemiBold: 'assets/fonts/IBMPlexSans-SemiBold.ttf',
+      Bold:     'assets/fonts/IBMPlexSans-Bold.ttf',
     },
   };
 
