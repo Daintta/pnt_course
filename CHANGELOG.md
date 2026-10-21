@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.10.1 — 21 October 2026
+### Fixed
+- Certificates use IBM Plex again. The Arimo change in v0.10.0 left most letters blank in the certificate PDF. Arimo stays on the web pages.
+
 ## v0.10.0 — 21 October 2026
 ### Changed
 - Branding and styling update to the Daintta design set: Arimo typeface throughout, including certificates; primary actions in teal `#00756F`; square corners on controls and cards; darker input borders.
