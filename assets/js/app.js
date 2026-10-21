@@ -310,9 +310,9 @@
     const l = m.lessons[idx];
     const prev = m.lessons[idx - 1], next = m.lessons[idx + 1];
     const isRead = readSet(m.id).has(l.id);
-    render(`<div class="module-layout">${toc(modById[m.id], l.id)}
+    render(`<div class="crumbs"><a href="#/">Modules</a> / <a href="#/module/${m.id}">Module ${m.number}</a> / Lesson ${idx + 1} of ${m.lessons.length}</div>
+      <div class="module-layout">${toc(modById[m.id], l.id)}
       <article class="lesson">
-        <div class="crumbs"><a href="#/">Modules</a> / <a href="#/module/${m.id}">Module ${m.number}</a> / Lesson ${idx + 1} of ${m.lessons.length}</div>
         <h1>${esc(l.title)}</h1>
         <div class="lesson-body">${l.html}</div>
         <div class="lesson-nav">
@@ -487,7 +487,7 @@
 
     function draw(focusSel) {
       const q = qs[cur];
-      render(`<div class="lesson" style="max-width:820px;margin:0 auto">
+      render(`<div class="lesson assessment-quiz" style="max-width:820px;margin:0 auto">
         <div class="crumbs">Module ${m.number} assessment</div>
         <div class="quiz-head"><h1 style="font-size:24px;margin:0">Question ${cur + 1} of ${qs.length}</h1>
           <div class="qdots" role="navigation" aria-label="Questions">${qs.map((x, i) => `<button type="button" data-go="${i}" class="${isAnswered(x) ? "answered" : ""}" ${i === cur ? 'aria-current="step"' : ""} aria-label="Question ${i + 1}${isAnswered(x) ? ", answered" : ""}">${i + 1}</button>`).join("")}</div></div>
@@ -517,8 +517,8 @@
       });
       $$(".qdots button", view()).forEach((b) => b.addEventListener("click", () => { cur = +b.dataset.go; draw(); }));
       $("#prev").addEventListener("click", () => { cur--; draw(); });
-      const nx = $("#next"); if (nx) nx.addEventListener("click", () => { if (q.type === "order") orderTouched.add(q.id); cur++; draw(); });
-      const rv = $("#review"); if (rv) rv.addEventListener("click", () => { if (q.type === "order") orderTouched.add(q.id); review(); });
+      const nx = $("#next"); if (nx) nx.addEventListener("click", () => { cur++; draw(); });
+      const rv = $("#review"); if (rv) rv.addEventListener("click", () => review());
     }
     function refreshDots() {
       $$(".qdots button", view()).forEach((b, i) => b.classList.toggle("answered", isAnswered(qs[i]) === true));
@@ -925,7 +925,7 @@
             ${uniqueItems.map((item) => `<div class="resource-card" data-searchable="${esc((item.title + ' ' + (item.desc || '')).toLowerCase())}">
               <h4 style="margin:0 0 8px;font-size:14px;font-weight:500">${esc(item.title)}</h4>
               ${item.desc ? `<p style="font-size:13px;margin:0 0 12px">${esc(item.desc)}</p>` : ""}
-              <a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener" style="font-size:12px;padding:6px 12px">Visit Resource</a>
+              <a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener">Visit Resource</a>
             </div>`).join("")}
           </div>` : ''}
         </div>`;
@@ -1404,37 +1404,6 @@
     }
   }
 
-  // Offline indicator
-  function initSyncIndicator() {
-    const indicator = $("#sync-status");
-    if (!indicator) return;
-
-    const updateStatus = () => {
-      indicator.classList.remove("offline", "syncing");
-      if (!navigator.onLine) {
-        indicator.classList.add("offline");
-        indicator.title = "Offline - changes will sync when online";
-      } else {
-        indicator.title = "Online";
-      }
-    };
-
-    updateStatus();
-    window.addEventListener("online", updateStatus);
-    window.addEventListener("offline", updateStatus);
-
-    // Expose function to show syncing state (called from store)
-    window.showSyncStatus = (isSyncing) => {
-      if (isSyncing) {
-        indicator.classList.remove("offline");
-        indicator.classList.add("syncing");
-        indicator.title = "Syncing changes...";
-      } else {
-        updateStatus();
-      }
-    };
-  }
-
   // Process sync queue when coming back online
   window.addEventListener("online", async () => {
     console.log("Back online - processing sync queue...");
@@ -1463,7 +1432,6 @@
   window.addEventListener("hashchange", () => { if (state) route(); });
   document.addEventListener("DOMContentLoaded", () => {
     initDarkMode();
-    initSyncIndicator();
     $("#lightbox .btn").addEventListener("click", () => $("#lightbox").close());
     $("#lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox") e.target.close(); });
     boot();
