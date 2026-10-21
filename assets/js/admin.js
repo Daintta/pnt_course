@@ -26,7 +26,6 @@
       }
 
       initDarkMode();
-      initSyncIndicator();
       await loadLearners();
       setupEventListeners();
     } catch (e) {
@@ -317,36 +316,6 @@
         toggle.textContent = '☀️';
       }
     });
-  }
-
-  function initSyncIndicator() {
-    const indicator = document.getElementById('sync-status');
-    window.showSyncStatus = (syncing) => {
-      if (syncing) {
-        indicator.textContent = '⊙';
-        indicator.style.color = '#ff9500';
-        indicator.classList.add('pulse');
-      } else {
-        navigator.onLine
-          ? (indicator.textContent = '●', indicator.style.color = '#4caf50', indicator.classList.remove('pulse'))
-          : (indicator.textContent = '●', indicator.style.color = '#f44336', indicator.classList.remove('pulse'));
-      }
-    };
-
-    const updateOnline = () => {
-      if (navigator.onLine) {
-        indicator.textContent = '●';
-        indicator.style.color = '#4caf50';
-        indicator.classList.remove('pulse');
-      } else {
-        indicator.textContent = '●';
-        indicator.style.color = '#f44336';
-      }
-    };
-
-    window.addEventListener('online', updateOnline);
-    window.addEventListener('offline', updateOnline);
-    updateOnline();
   }
 
   // Close modal on outside click
