@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.10.0 — 21 October 2026
+### Changed
+- Branding and styling update to the Daintta design set: Arimo typeface throughout, including certificates; primary actions in teal `#00756F`; square corners on controls and cards; darker input borders.
+- Navigation is a sidebar on desktop: light sidebar in light mode, navy in dark mode. Phones keep the top bar.
+- Lessons use the full content width with justified text. Callouts stay left-aligned.
+- Resources: buttons align at the bottom of each card, and both card types use the same button style.
+- Assessment: the question panel matches the width of the progress dots and navigation buttons.
+- Badges, alerts, progress bars and table headers use the updated palette.
+### Removed
+- Sync status dot in the header.
+- IBM Plex font files.
+### Fixed
+- Assessment: clicking Next or Review no longer marks an arrangement question as answered.
+
 ## v0.9.16 — 20 October 2026
 ### Fixed
 - Assessment progress dots: answering a question no longer lights up or clears unrelated questions. Affected matching and multiple-select questions.
