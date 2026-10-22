@@ -5,7 +5,8 @@
   "scripts": {
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "check-links": "node scripts/check-links.js"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.5",

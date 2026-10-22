@@ -20,6 +20,13 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      # Warning only: results go to the job summary and do not block the deploy.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check external links (warning only)
+        continue-on-error: true
+        run: node scripts/check-links.js
       - name: Collect site files
         run: |
           mkdir _site

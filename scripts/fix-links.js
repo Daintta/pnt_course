@@ -68,8 +68,10 @@ function fixModule(modulePath) {
     module.lessons.forEach(lesson => {
       if (lesson.html && lesson.html.includes(replacement.old)) {
         console.log(`  Replacing in ${moduleName}: ${replacement.old.substring(0, 40)}...`);
-        // Replace all occurrences of the old URL
-        lesson.html = lesson.html.split(replacement.old).join(replacement.new);
+        // Replace whole URLs only. The new URL starts with the old one, so a plain
+        // string replace would append the suffix again on every run.
+        const oldUrl = new RegExp(replacement.old.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\w-])', 'g');
+        lesson.html = lesson.html.replace(oldUrl, replacement.new);
         modified = true;
       }
     });
