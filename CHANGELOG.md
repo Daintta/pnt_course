@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.10.3 — 22 October 2026
+### Fixed
+- Modules page: the Continue and Get Started buttons line up on the same edge in every row, including modules that show "Assessment ready".
+
+## v0.10.2 — 21 October 2026
+### Changed
+- Headings use dark teal `#00756F` in light mode and `#3cc2ae` in dark mode, for contrast.
+- Page gutters are 48px on desktop and 16px on phones.
+- Lesson paragraphs and list items are 16px.
+### Fixed
+- Contrast of module action buttons and the principle callout title raised to 4.5:1.
+
 ## v0.10.1 — 21 October 2026
 ### Fixed
 - Certificates use IBM Plex again. The Arimo change in v0.10.0 left most letters blank in the certificate PDF. Arimo stays on the web pages.
