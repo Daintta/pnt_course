@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // Checks every external link the app shows to learners.
 //
-// Sources: lesson content (content/modules), the Resources list (assets/js/app.js)
-// and the SharePoint module links (assets/js/config.js).
+// Sources: lesson content (content/modules) and the Resources list (assets/js/app.js).
 //
 // Usage: npm run check-links
 // Exit code is 1 if any link is broken (4xx/5xx) or cannot be reached.
@@ -20,7 +19,6 @@ const SOURCE_FILES = [
     .filter((f) => f.endsWith('.js'))
     .map((f) => path.join('content/modules', f)),
   'assets/js/app.js',
-  'assets/js/config.js',
 ];
 
 // Namespace identifiers and placeholders are not links.

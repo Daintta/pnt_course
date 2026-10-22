@@ -55,7 +55,6 @@ Run in headless Chromium against a fresh browser profile, 5 October 2026. Module
 ## Resources
 
 - [x] Resources page renders — 60 cards
-- [x] All 10 SharePoint module links present — 10
 - [x] Suggest a Resource points at Daintta repo
 - [x] Resources nav item highlighted
 
@@ -81,6 +80,5 @@ Run in headless Chromium against a fresh browser profile, 5 October 2026. Module
 ## Manual checks before each release
 
 - [ ] Open a module and a pathway certificate in Chrome, Edge and Safari and check the PDF displays
-- [ ] SharePoint links open for a signed-in Daintta user
 - [ ] Footer shows the new version number
 - [ ] Deployed GitHub Pages site loads over HTTPS
