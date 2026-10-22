@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.10.3 — 22 October 2026
+### Fixed
+- Modules page: the Continue and Get Started buttons line up on the same edge in every row, including modules that show "Assessment ready".
+
 ## v0.10.2 — 21 October 2026
 ### Changed
 - Headings use dark teal `#00756F` in light mode and `#3cc2ae` in dark mode, for contrast.
