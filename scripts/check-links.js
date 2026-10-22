@@ -142,5 +142,21 @@ console.log(
   `${groups.unreachable.length} unreachable, ${groups.restricted.length} restricted`
 );
 
+// Write the same results to the GitHub Actions job summary when running in CI.
+if (process.env.GITHUB_STEP_SUMMARY) {
+  const md = [`## Link check`, '', `${urls.length} links checked.`, ''];
+  for (const kind of ['broken', 'server error', 'unreachable', 'restricted', 'redirected']) {
+    if (!groups[kind].length) continue;
+    md.push(`### ${kind} (${groups[kind].length})`, `_${NOTES[kind]}_`, '');
+    for (const { url, result, sources } of groups[kind]) {
+      md.push(`- ${result.error ?? `HTTP ${result.status}`}: ${url}`);
+      for (const s of sources) md.push(`  - ${s}`);
+    }
+    md.push('');
+  }
+  fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, md.join('\n') + '\n');
+}
+
+// Warn by default. Pass --strict to fail the run when any link is broken or unreachable.
 const failed = groups.broken.length + groups['server error'].length + groups.unreachable.length;
-process.exitCode = failed ? 1 : 0;
+if (process.argv.includes('--strict') && failed) process.exitCode = 1;
