@@ -2,7 +2,7 @@
 
 A self-paced web learning app for the Daintta PNT Engineering *Foundation & Practitioner Learning Programme*. It contains 10 modules built from the programme's Word documents. Each module ends with a 15-question assessment. Learners who score 80% or more get a printable certificate, and passing all 10 modules earns a programme certificate.
 
-This is the **standalone** version. It needs no server or database: each learner's progress is saved in their own browser. If you need a central record of every employee's progress, use the **admin version** (`pnt-learning-admin`) instead.
+This is the **standalone** version. It needs no server or database: each learner's progress is saved in their own browser.
 
 ## What's included
 
@@ -116,15 +116,13 @@ The pass mark applies to the number of questions in each file, so modules can ha
 - **It is not tamper-proof.** Scoring happens in the learner's browser, so the answer key is present in the page's JavaScript and a determined person could find it. Certificate IDs cannot be verified centrally.
 - **There is no central reporting.** Learners send their certificate PDFs to show completion.
 
-The admin version addresses all three: server-side scoring with hidden answer keys, central records, an admin dashboard and a public certificate-verification page.
-
 ## Folder structure
 
 ```
 index.html                  the app
 assets/css/app.css          styles
 assets/js/config.js         settings
-assets/js/app.js            app logic (shared with the admin version)
+assets/js/app.js            app logic
 assets/js/store-local.js    browser storage and scoring
 assets/img/                 logo, favicon, module diagrams (WebP)
 content/                    generated lesson, practice, glossary and assessment data
