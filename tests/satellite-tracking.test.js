@@ -1,50 +1,64 @@
 import { describe, it, expect } from 'vitest';
 
 describe('Satellite Tracking - Progress Calculation', () => {
-  const calcLevelComplete = (modulesPassed, modulesWithProgress, totalModules) => {
-    const completed = modulesPassed;
-    const inProgress = modulesWithProgress;
-    const pctWithProgress = completed + (inProgress * 0.5);
-    return Math.round((pctWithProgress / totalModules) * 100);
+  // Mirrors calcLevelComplete in assets/js/app.js. Each module is { passed, lessonsRead, lessonCount }.
+  const calcLevelComplete = (modules) => {
+    const total = modules.reduce((sum, m) => {
+      if (m.passed) return sum + 1;
+      return sum + m.lessonsRead / m.lessonCount;
+    }, 0);
+    return Math.round((total / modules.length) * 100);
   };
 
+  const notStarted = { passed: false, lessonsRead: 0, lessonCount: 5 };
+  const passed = { passed: true, lessonsRead: 5, lessonCount: 5 };
+
   it('should show 0% for level with no progress', () => {
-    const progress = calcLevelComplete(0, 0, 4);
+    const progress = calcLevelComplete([notStarted, notStarted, notStarted, notStarted]);
     expect(progress).toBe(0);
   });
 
-  it('should show 12.5% for one module in progress (4-module level)', () => {
-    const progress = calcLevelComplete(0, 1, 4);
-    expect(progress).toBe(13); // 0.5 / 4 = 12.5%, rounds to 13
+  it('should move by each lesson read within a module (4-module level)', () => {
+    // 5-lesson module: 1 of 5 read = 20% of 1 module = 5% of the level
+    const progress = calcLevelComplete([{ passed: false, lessonsRead: 1, lessonCount: 5 }, notStarted, notStarted, notStarted]);
+    expect(progress).toBe(5);
   });
 
-  it('should show 25% for one module completed (4-module level)', () => {
-    const progress = calcLevelComplete(1, 0, 4);
+  it('should keep rising as more lessons are read, not jump to 50%', () => {
+    const after2 = calcLevelComplete([{ passed: false, lessonsRead: 2, lessonCount: 5 }, notStarted, notStarted, notStarted]);
+    const after4 = calcLevelComplete([{ passed: false, lessonsRead: 4, lessonCount: 5 }, notStarted, notStarted, notStarted]);
+    expect(after2).toBe(10);
+    expect(after4).toBe(20);
+  });
+
+  it('should show 25% for one module passed (4-module level)', () => {
+    const progress = calcLevelComplete([passed, notStarted, notStarted, notStarted]);
     expect(progress).toBe(25);
   });
 
-  it('should show 50% for two modules completed (4-module level)', () => {
-    const progress = calcLevelComplete(2, 0, 4);
+  it('should show 50% for two modules passed (4-module level)', () => {
+    const progress = calcLevelComplete([passed, passed, notStarted, notStarted]);
     expect(progress).toBe(50);
   });
 
-  it('should show 100% for all modules completed', () => {
-    const progress = calcLevelComplete(4, 0, 4);
+  it('should show 100% for all modules passed', () => {
+    const progress = calcLevelComplete([passed, passed, passed, passed]);
     expect(progress).toBe(100);
   });
 
-  it('should handle mixed progress and completion', () => {
-    const progress = calcLevelComplete(2, 1, 4); // 2 done, 1 in progress
-    expect(progress).toBe(63); // (2 + 0.5) / 4 = 62.5%, rounds to 63
+  it('should combine passed modules with partial reading', () => {
+    // 2 passed, 1 module with 2 of 5 lessons read, 1 not started: (2 + 0.4) / 4 = 60%
+    const progress = calcLevelComplete([passed, passed, { passed: false, lessonsRead: 2, lessonCount: 5 }, notStarted]);
+    expect(progress).toBe(60);
   });
 
   it('should work for 3-module level (Technology)', () => {
-    const progress = calcLevelComplete(1, 1, 3); // 1 done, 1 in progress
-    expect(progress).toBe(50); // (1 + 0.5) / 3 = 50%
+    const progress = calcLevelComplete([passed, { passed: false, lessonsRead: 5, lessonCount: 5 }, notStarted]);
+    expect(progress).toBe(67); // (1 + 1 + 0) / 3 = 66.7%, rounds to 67
   });
 
   it('should work for 3-module level (Engineering)', () => {
-    const progress = calcLevelComplete(3, 0, 3);
+    const progress = calcLevelComplete([passed, passed, passed]);
     expect(progress).toBe(100);
   });
 });

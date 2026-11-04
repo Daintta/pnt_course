@@ -76,12 +76,14 @@
 
   /* ---------------- dashboard ---------------- */
   function satelliteTracking() {
-    // Calculate completion % for each learning level based on certificates and progress
+    // Calculate completion % for each learning level: a passed module counts as 1, otherwise
+    // it counts as the share of its lessons that have been read
     const calcLevelComplete = (moduleIds) => {
-      const completed = moduleIds.filter(id => cert(id)).length;
-      const inProgress = moduleIds.filter(id => !cert(id) && (lessonsRead(id) > 0 || attempts(id).length > 0)).length;
-      const pctWithProgress = completed + (inProgress * 0.5); // in-progress modules count as 50%
-      return Math.round((pctWithProgress / moduleIds.length) * 100);
+      const total = moduleIds.reduce((sum, id) => {
+        if (cert(id)) return sum + 1;
+        return sum + lessonsRead(id) / modById[id].lessons.length;
+      }, 0);
+      return Math.round((total / moduleIds.length) * 100);
     };
 
     const l1Complete = calcLevelComplete(["m01", "m02", "m03", "m04"]);
@@ -146,6 +148,7 @@
       
       <!-- Level labels with status-based colors -->
       <text x="${cx + r1 + 15}" y="${cy}" text-anchor="start" font-size="11" fill="#0BB3AD" font-family="var(--font)" font-weight="600">L1</text>
+      <text x="${cx + r1 + 15}" y="${cy + 12}" text-anchor="start" font-size="8" fill="#aaa">${Math.round(l1Complete)}%</text>
       <text x="${cx + r2 + 15}" y="${cy}" text-anchor="start" font-size="11" fill="${l2Complete > 0 ? "#F59E0B" : "#9CA3AF"}" font-family="var(--font)" font-weight="600">L2</text>
       <text x="${cx + r3 + 15}" y="${cy}" text-anchor="start" font-size="11" fill="${l3Complete > 0 ? "#F59E0B" : "#9CA3AF"}" font-family="var(--font)" font-weight="600">L3</text>
       
