@@ -211,11 +211,12 @@
       if (PNT.config.requireAllLessonsRead && (d.read[moduleId] || []).length < meta.lessons.length) throw new Error("Read all lessons before taking the assessment.");
       const results = a.questions.map((q) => ({ id: q.id, correct: (answers[q.id] || "") === q.answer, answer: q.answer, explanation: q.explanation }));
       const score = results.filter((r) => r.correct).length;
+      const answered = a.questions.filter((q) => (answers[q.id] || "") !== "").length;
       const total = results.length;
       const percent = Math.round((score / total) * 100);
       const passed = percent >= PNT.config.passMark;
       const now = new Date().toISOString();
-      (d.attempts[moduleId] = d.attempts[moduleId] || []).push({ score, total, percent, passed, at: now });
+      (d.attempts[moduleId] = d.attempts[moduleId] || []).push({ score, answered, total, percent, passed, at: now });
       let certificate = null, programmeCertificate = null;
       if (passed && !d.certificates[moduleId]) {
         certificate = d.certificates[moduleId] = { id: certId(moduleId), moduleId, percent, issuedAt: now, fullName: d.profile.fullName, email: d.profile.email, version: version() };
