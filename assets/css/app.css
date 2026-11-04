@@ -166,7 +166,7 @@ h3 { font-size: 19px; margin: 28px 0 8px; }
 }
 .tracking { width: 100%; max-width: 460px; display: block; margin: 0 auto; }
 .tracking .sat-body { transition: fill 0.3s ease; }
-@media (prefers-reduced-motion: reduce) { .tracking .sat-orbit-l1, .tracking .sat-complete { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .tracking .sat-complete { animation: none !important; } }
 .legend { display: flex; justify-content: center; gap: 18px; font-size: 13px; color: var(--ink-soft); margin-top: 8px; flex-wrap: wrap; }
 .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1.5px solid var(--ink-soft); }
 .legend .l-progress { border-color: var(--track); }

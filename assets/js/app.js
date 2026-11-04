@@ -113,15 +113,10 @@
       <svg class="tracking" viewBox="0 0 460 460" role="img" aria-label="Learning progress: Level 1 Foundation ${Math.round(l1Complete)}%, Level 2 Practitioner ${Math.round(l2Complete)}%, Level 3 Applied Engineering ${Math.round(l3Complete)}%. ${passedCount()} of ${catalog.length} modules passed.">
       <defs>
         <style>
-          @keyframes orbit-l1 {
-            from { transform: rotate(0deg); transform-origin: 230px 230px; }
-            to { transform: rotate(360deg); transform-origin: 230px 230px; }
-          }
           @keyframes pulse {
             0%, 100% { opacity: 0.8; r: 12; }
             50% { opacity: 1; r: 14; }
           }
-          .sat-orbit-l1 { animation: orbit-l1 8s linear infinite; }
           .sat-complete { animation: pulse 2s ease-in-out infinite; }
         </style>
         <filter id="glow-complete"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
@@ -148,17 +143,15 @@
       
       <!-- Level labels with status-based colors -->
       <text x="${cx + r1 + 15}" y="${cy}" text-anchor="start" font-size="11" fill="#0BB3AD" font-family="var(--font)" font-weight="600">L1</text>
-      <text x="${cx + r1 + 15}" y="${cy + 12}" text-anchor="start" font-size="8" fill="#aaa">${Math.round(l1Complete)}%</text>
       <text x="${cx + r2 + 15}" y="${cy}" text-anchor="start" font-size="11" fill="${l2Complete > 0 ? "#F59E0B" : "#9CA3AF"}" font-family="var(--font)" font-weight="600">L2</text>
       <text x="${cx + r3 + 15}" y="${cy}" text-anchor="start" font-size="11" fill="${l3Complete > 0 ? "#F59E0B" : "#9CA3AF"}" font-family="var(--font)" font-weight="600">L3</text>
       
       <!-- Satellites -->
-      <!-- Level 1: Continuously orbiting (complete) -->
-      <g class="sat-orbit-l1">
-        <circle cx="${x1}" cy="${y1}" r="12" fill="${glowColor(status(l1Complete))}" class="sat-body sat-complete" filter="url(#glow-complete)"/>
-        <text x="${x1}" y="${y1}" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="700" fill="#000" pointer-events="none">1</text>
-      </g>
-      
+      <!-- Level 1: Stationary at progress point -->
+      <circle cx="${x1}" cy="${y1}" r="12" fill="${glowColor(status(l1Complete))}" class="sat-body ${status(l1Complete) === "complete" ? "sat-complete" : ""}" filter="${status(l1Complete) === "progress" ? "url(#glow-progress)" : status(l1Complete) === "complete" ? "url(#glow-complete)" : "url(#glow-idle)"}"/>
+      <text x="${x1}" y="${y1}" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="700" fill="${l1Complete > 0 ? "#000" : "#999"}" pointer-events="none">1</text>
+      <text x="${x1}" y="${y1 + 22}" text-anchor="middle" font-size="8" fill="#aaa">${Math.round(l1Complete)}%</text>
+
       <!-- Level 2: Stationary at progress point -->
       <circle cx="${x2}" cy="${y2}" r="12" fill="${glowColor(status(l2Complete))}" class="sat-body" filter="${status(l2Complete) === "progress" ? "url(#glow-progress)" : status(l2Complete) === "complete" ? "url(#glow-complete)" : "url(#glow-idle)"}"/>
       <text x="${x2}" y="${y2}" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="700" fill="${l2Complete > 0 ? "#000" : "#999"}" pointer-events="none">2</text>
