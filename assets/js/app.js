@@ -76,12 +76,16 @@
 
   /* ---------------- dashboard ---------------- */
   function satelliteTracking() {
-    // Calculate completion % for each learning level: a passed module counts as 1, otherwise
-    // it counts as the share of its lessons that have been read
+    // Calculate completion % for each learning level. Within a module, lessons read make up the
+    // first 50% (one step per lesson) and questions answered in an assessment attempt make up the
+    // remaining 50% (one step per question). A passed module counts as complete. Attempts saved
+    // before answered counts were recorded fall back to their score.
     const calcLevelComplete = (moduleIds) => {
       const total = moduleIds.reduce((sum, id) => {
         if (cert(id)) return sum + 1;
-        return sum + lessonsRead(id) / modById[id].lessons.length;
+        const lessons = modById[id].lessons.length;
+        const questions = attempts(id).reduce((most, a) => Math.max(most, (a.answered ?? a.score) / a.total), 0);
+        return sum + 0.5 * (Math.min(lessonsRead(id), lessons) / lessons) + 0.5 * questions;
       }, 0);
       return Math.round((total / moduleIds.length) * 100);
     };
